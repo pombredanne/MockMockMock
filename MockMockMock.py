@@ -1,22 +1,6 @@
 class MockException( Exception ):
     pass
 
-#### Actions Begin
-class Return:
-    def __init__( self, value ):
-        self.__value = value
-
-    def __call__( self ):
-        return self.__value
-
-class Raise:
-    def __init__( self, exception ):
-        self.__exception = exception
-
-    def __call__( self ):
-        raise self.__exception
-#### Actions End
-
 class ArgumentsChecker:
     def __init__( self, args, kwds ):
         self.__args = args
@@ -30,13 +14,14 @@ class CallDescription( object ):
     def __init__( self, name, args, kwds ):
         self.__name = name
         self.__argumentsChecker = ArgumentsChecker( args, kwds )
-        self.__action = Return( None )
+        self.andReturn( None )
 
     def andReturn( self, value ):
-        self.andExecute( Return( value ) )
+        self.andExecute( lambda : value )
 
     def andRaise( self, exception ):
-        self.andExecute( Raise( exception ) )
+        def Raise(): raise exception
+        self.andExecute( Raise )
 
     def andExecute( self, callable ):
         self.__action = callable
