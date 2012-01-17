@@ -1,1 +1,2 @@
-from MockMockMock import Mock, MockException
+from Mock import Mock
+from MockException import MockException

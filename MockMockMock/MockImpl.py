@@ -1,5 +1,4 @@
-class MockException( Exception ):
-    pass
+import MockException
 
 class ArgumentsChecker:
     def __init__( self, args, kwds ):
@@ -8,7 +7,7 @@ class ArgumentsChecker:
 
     def check( self, args, kwds ):
         if self.__args != args or self.__kwds != kwds:
-            raise MockException()
+            raise MockException.MockException()
 
 class Actionable( object ):
     def __init__( self ):
@@ -77,7 +76,7 @@ class Object:
         if expectation.name == name:
             return CallChecker( self.__mock, expectation )
         else:
-            raise MockException()
+            raise MockException.MockException()
 
 class MockImpl( object ):
     def __init__( self ):
@@ -92,17 +91,8 @@ class MockImpl( object ):
     def getExpectations( self ):
         return self.__expectations
 
-class Mock( object ):
-    def __init__( self ):
-        self.__impl = MockImpl()
-
-    @property
     def expect( self ):
-        return Expecter( self.__impl )
+        return Expecter( self )
 
-    @property
     def object( self ):
-        return Object( self.__impl )
-
-    def tearDown( self ):
-        pass
+        return Object( self )
