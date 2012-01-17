@@ -72,5 +72,6 @@ class SingleExpectationTestCase( unittest.TestCase ):
 # Expect facultative calls
 # Alternate expectations and calls
 # Check that expected properties do not allow calls and vice versa
+# Make the Mock.object itself callable and expect this call
 
 unittest.main()
