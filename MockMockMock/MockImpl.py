@@ -27,7 +27,7 @@ class Actionable( object ):
     def action( self ):
         return self.__action
 
-class CallDescription( Actionable ):
+class MethodCallExpectation( Actionable ):
     def __init__( self, name, args, kwds ):
         Actionable.__init__( self )
         self.__name = name
@@ -37,62 +37,72 @@ class CallDescription( Actionable ):
     def name( self ):
         return self.__name
 
-    @property
-    def arguments( self ):
-        return self.__argumentsChecker
+    def __call__( self, *args, **kwds ):
+        self.__argumentsChecker.check( args, kwds )
+        return self.action()
 
-class ExpectedCall:
+class PropertyExpectation( Actionable ):
+    def __init__( self, name ):
+        self.__name = name
+
+    @property
+    def name( self ):
+        return self.__name
+
+class AttributeExpecter:
     def __init__( self, mock, name ):
         self.__mock = mock
         self.__name = name
+        self.__expectation = PropertyExpectation( name )
+        self.__mock.setExpectation( self.__expectation )
 
     def __call__( self, *args, **kwds ):
-        call = CallDescription( self.__name, args, kwds )
-        self.__mock.addExpectation( call )
+        call = MethodCallExpectation( self.__name, args, kwds )
+        self.__mock.setExpectation( call )
         return call
+
+    def andReturn( self, value ):
+        self.__expectation.andReturn( value )
+
+    def andRaise( self, exception ):
+        self.__expectation.andRaise( exception )
+
+    def andExecute( self, callable ):
+        self.__expectation.andExecute( callable )
 
 class Expecter:
     def __init__( self, mock ):
         self.__mock = mock
 
     def __getattr__( self, name ):
-        return ExpectedCall( self.__mock, name )
-
-class CallChecker:
-    def __init__( self, mock, expectation ):
-        self.__mock = mock
-        self.__expectation = expectation
-
-    def __call__( self, *args, **kwds ):
-        self.__expectation.arguments.check( args, kwds )
-        return self.__expectation.action()
-
-class Object:
+        return AttributeExpecter( self.__mock, name )
+       
+class Checker:
     def __init__( self, mock ):
         self.__mock = mock
 
     def __getattr__( self, name ):
-        expectation = self.__mock.getExpectations()[ 0 ]
+        expectation = self.__mock.getExpectation()
         if expectation.name == name:
-            return CallChecker( self.__mock, expectation )
+            if isinstance( expectation, MethodCallExpectation ):
+                return expectation
+            else:
+                return expectation.action()
         else:
             raise MockException.MockException()
 
 class MockImpl( object ):
     def __init__( self ):
-        self.__expectations = []
+        self.__expectation = None
 
-    def addExpectation( self, call ):
-        self.__expectations.append( call )
+    def setExpectation( self, expectation ):
+        self.__expectation = expectation
 
-    def removeExpectation( self ):
-        self.__expectations = self.__expectations[ 1: ]
-
-    def getExpectations( self ):
-        return self.__expectations
+    def getExpectation( self ):
+        return self.__expectation
 
     def expect( self ):
         return Expecter( self )
 
     def object( self ):
-        return Object( self )
+        return Checker( self )
