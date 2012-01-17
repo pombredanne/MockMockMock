@@ -10,7 +10,7 @@ class OneCallTestCase( unittest.TestCase ):
         unittest.TestCase.setUp( self )
         self.mock = MockMockMock.Mock()
 
-    def testSimpleCall( self ):
+    def testCall( self ):
         self.mock.expect.foobar()
         self.mock.object.foobar()
 
@@ -29,6 +29,14 @@ class OneCallTestCase( unittest.TestCase ):
     def testCallWithRaise( self ):
         self.mock.expect.foobar().andRaise( TestException() )
         self.assertRaises( TestException, lambda : self.mock.object.foobar() )
+
+    def testCallWithSpecificAction( self ):
+        self.check = False
+        def f():
+            self.check = True
+        self.mock.expect.foobar().andExecute( f )
+        self.mock.object.foobar()
+        self.assertTrue( self.check )
 
     def testCallWithBadArgument( self ):
         self.mock.expect.foobar( 42 )

@@ -6,14 +6,14 @@ class Return:
     def __init__( self, value ):
         self.__value = value
 
-    def execute( self ):
+    def __call__( self ):
         return self.__value
 
 class Raise:
     def __init__( self, exception ):
         self.__exception = exception
 
-    def execute( self ):
+    def __call__( self ):
         raise self.__exception
 #### Actions End
 
@@ -33,10 +33,13 @@ class CallDescription( object ):
         self.__action = Return( None )
 
     def andReturn( self, value ):
-        self.__action = Return( value )
+        self.andExecute( Return( value ) )
 
     def andRaise( self, exception ):
-        self.__action = Raise( exception )
+        self.andExecute( Raise( exception ) )
+
+    def andExecute( self, callable ):
+        self.__action = callable
 
     @property
     def name( self ):
@@ -74,7 +77,7 @@ class CallChecker:
 
     def __call__( self, *args, **kwds ):
         self.__expectation.arguments.check( args, kwds )
-        return self.__expectation.action.execute()
+        return self.__expectation.action()
 
 class Object:
     def __init__( self, mock ):
