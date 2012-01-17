@@ -87,20 +87,9 @@ class Object:
         else:
             raise MockException()
 
-class Mock( object ):
+class MockImpl( object ):
     def __init__( self ):
         self.__expectations = []
-
-    @property
-    def expects( self ):
-        return Expecter( self )
-
-    @property
-    def object( self ):
-        return Object( self )
-
-    def tearDown( self ):
-        pass
 
     def addExpectation( self, call ):
         self.__expectations.append( call )
@@ -110,3 +99,18 @@ class Mock( object ):
 
     def getExpectations( self ):
         return self.__expectations
+
+class Mock( object ):
+    def __init__( self ):
+        self.__impl = MockImpl()
+
+    @property
+    def expects( self ):
+        return Expecter( self.__impl )
+
+    @property
+    def object( self ):
+        return Object( self.__impl )
+
+    def tearDown( self ):
+        pass
