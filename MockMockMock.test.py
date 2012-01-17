@@ -1,6 +1,6 @@
 import unittest
 
-import MockMockMock
+from MockMockMock import Mock, MockException
 
 class TestException( Exception ):
     pass
@@ -8,7 +8,7 @@ class TestException( Exception ):
 class OneCallTestCase( unittest.TestCase ):
     def setUp( self ):
         unittest.TestCase.setUp( self )
-        self.mock = MockMockMock.Mock()
+        self.mock = Mock()
 
     def testCall( self ):
         self.mock.expect.foobar()
@@ -32,7 +32,7 @@ class OneCallTestCase( unittest.TestCase ):
 
     # def testPropertyWithRaise( self ):
         # self.mock.expect.foobar.andRaise( TestException() )
-        # self.assertRaises( MockMockMock.MockException, lambda : self.mock.object.foobar )
+        # self.assertRaises( MockException, lambda : self.mock.object.foobar )
 
     def testCallWithSpecificAction( self ):
         self.check = False
@@ -52,15 +52,15 @@ class OneCallTestCase( unittest.TestCase ):
 
     def testCallWithBadArgument( self ):
         self.mock.expect.foobar( 42 )
-        self.assertRaises( MockMockMock.MockException, lambda : self.mock.object.foobar( 43 ) )
+        self.assertRaises( MockException, lambda : self.mock.object.foobar( 43 ) )
 
     def testCallWithBadName( self ):
         self.mock.expect.foobar()
-        self.assertRaises( MockMockMock.MockException, lambda : self.mock.object.barbaz() )
+        self.assertRaises( MockException, lambda : self.mock.object.barbaz() )
 
     # def testPropertyWithBadName( self ):
         # self.mock.expect.foobar.andReturn( 42 )
-        # self.assertRaises( MockMockMock.MockException, lambda : self.mock.object.barbaz )
+        # self.assertRaises( MockException, lambda : self.mock.object.barbaz )
 
     def tearDown( self ):
         unittest.TestCase.tearDown( self )
