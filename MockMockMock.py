@@ -32,10 +32,10 @@ class CallDescription( object ):
         self.__argumentsChecker = ArgumentsChecker( args, kwds )
         self.__action = Return( None )
 
-    def returns( self, value ):
+    def andReturn( self, value ):
         self.__action = Return( value )
 
-    def raises( self, exception ):
+    def andRaise( self, exception ):
         self.__action = Raise( exception )
 
     @property
@@ -105,7 +105,7 @@ class Mock( object ):
         self.__impl = MockImpl()
 
     @property
-    def expects( self ):
+    def expect( self ):
         return Expecter( self.__impl )
 
     @property
