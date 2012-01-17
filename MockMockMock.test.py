@@ -18,6 +18,10 @@ class OneCallTestCase( unittest.TestCase ):
         self.mock.expect.foobar( 42 )
         self.mock.object.foobar( 42 )
 
+    # def testPropertyWithSimpleReturn( self ):
+        # self.mock.expect.foobar.andReturn( 42 )
+        # self.assertEqual( self.mock.object.foobar, 42 )
+
     def testCallWithReturn( self ):
         self.mock.expect.foobar().andReturn( 42 )
         self.assertEqual( self.mock.object.foobar(), 42 )
@@ -34,8 +38,18 @@ class OneCallTestCase( unittest.TestCase ):
         self.mock.expect.foobar()
         self.assertRaises( MockMockMock.MockException, lambda : self.mock.object.barbaz() )
 
+    # def testPropertyWithBadName( self ):
+        # self.mock.expect.foobar.andReturn( 42 )
+        # self.assertRaises( MockMockMock.MockException, lambda : self.mock.object.barbaz )
+
     def tearDown( self ):
         unittest.TestCase.tearDown( self )
         self.mock.tearDown()
+
+# Expect repetitions of calls
+# Expect group of calls in specific order
+# Expect group of calls in any order
+# Expect facultative calls
+# Alternate expectations and calls
 
 unittest.main()
