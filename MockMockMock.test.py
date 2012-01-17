@@ -18,17 +18,21 @@ class OneCallTestCase( unittest.TestCase ):
         self.mock.expect.foobar( 42 )
         self.mock.object.foobar( 42 )
 
-    # def testPropertyWithSimpleReturn( self ):
-        # self.mock.expect.foobar.andReturn( 42 )
-        # self.assertEqual( self.mock.object.foobar, 42 )
-
     def testCallWithReturn( self ):
         self.mock.expect.foobar().andReturn( 42 )
         self.assertEqual( self.mock.object.foobar(), 42 )
 
+    # def testPropertyWithReturn( self ):
+        # self.mock.expect.foobar.andReturn( 42 )
+        # self.assertEqual( self.mock.object.foobar, 42 )
+
     def testCallWithRaise( self ):
         self.mock.expect.foobar().andRaise( TestException() )
         self.assertRaises( TestException, lambda : self.mock.object.foobar() )
+
+    # def testPropertyWithRaise( self ):
+        # self.mock.expect.foobar.andRaise( TestException() )
+        # self.assertRaises( MockMockMock.MockException, lambda : self.mock.object.foobar )
 
     def testCallWithSpecificAction( self ):
         self.check = False
@@ -37,6 +41,14 @@ class OneCallTestCase( unittest.TestCase ):
         self.mock.expect.foobar().andExecute( f )
         self.mock.object.foobar()
         self.assertTrue( self.check )
+
+    # def testPropertyWithSpecificAction( self ):
+        # self.check = False
+        # def f():
+            # self.check = True
+        # self.mock.expect.foobar.andExecute( f )
+        # self.mock.object.foobar
+        # self.assertTrue( self.check )
 
     def testCallWithBadArgument( self ):
         self.mock.expect.foobar( 42 )
@@ -59,5 +71,6 @@ class OneCallTestCase( unittest.TestCase ):
 # Expect group of calls in any order
 # Expect facultative calls
 # Alternate expectations and calls
+# Check that expected properties do not allow calls and vice versa
 
 unittest.main()
