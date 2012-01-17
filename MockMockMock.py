@@ -10,10 +10,8 @@ class ArgumentsChecker:
         if self.__args != args or self.__kwds != kwds:
             raise MockException()
 
-class CallDescription( object ):
-    def __init__( self, name, args, kwds ):
-        self.__name = name
-        self.__argumentsChecker = ArgumentsChecker( args, kwds )
+class Actionable( object ):
+    def __init__( self ):
         self.andReturn( None )
 
     def andReturn( self, value ):
@@ -27,12 +25,18 @@ class CallDescription( object ):
         self.__action = callable
 
     @property
-    def name( self ):
-        return self.__name
-
-    @property
     def action( self ):
         return self.__action
+
+class CallDescription( Actionable ):
+    def __init__( self, name, args, kwds ):
+        Actionable.__init__( self )
+        self.__name = name
+        self.__argumentsChecker = ArgumentsChecker( args, kwds )
+
+    @property
+    def name( self ):
+        return self.__name
 
     @property
     def arguments( self ):
