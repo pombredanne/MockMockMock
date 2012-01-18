@@ -19,15 +19,18 @@ class PublicInterface( unittest.TestCase ):
 
     def testExpectation( self ):
         self.assertEqual( self.dir( self.mock.expect.foobar ), [ "andExecute", "andRaise", "andReturn", "withArguments" ] )
-        self.assertTrue( isCallable( self.mock.expect.barbaz ) )
+        self.assertTrue( isCallable( self.mock.expect.foobar ) )
 
-    def testCalledExpectation_1( self ):
+    def testCalledExpectation( self ):
         self.assertEqual( self.dir( self.mock.expect.foobar( 42 ) ), [ "andExecute", "andRaise", "andReturn" ] )
-        self.assertFalse( isCallable( self.mock.expect.barbaz( 42 ) ) )
-
-    def testCalledExpectation_2( self ):
+        self.assertFalse( isCallable( self.mock.expect.foobar( 42 ) ) )
         self.assertEqual( self.dir( self.mock.expect.foobar.withArguments( 42 ) ), [ "andExecute", "andRaise", "andReturn" ] )
-        self.assertFalse( isCallable( self.mock.expect.barbaz.withArguments( 42 ) ) )
+        self.assertFalse( isCallable( self.mock.expect.foobar.withArguments( 42 ) ) )
+
+    def testAndedExpectation( self ):
+        self.assertEqual( self.dir( self.mock.expect.foobar.withArguments( 42 ).andReturn( 12 ) ), [] )
+        self.assertEqual( self.dir( self.mock.expect.foobar.withArguments( 42 ).andRaise( TestException() ) ), [] )
+        self.assertEqual( self.dir( self.mock.expect.foobar.withArguments( 42 ).andExecute( lambda : 12 ) ), [] )
 
     def testObject( self ):
         self.assertEqual( self.dir( self.mock.object ), [] )

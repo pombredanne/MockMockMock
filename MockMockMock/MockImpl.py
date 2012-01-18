@@ -27,26 +27,47 @@ class Expectation( object ):
     def expectsCall( self ):
         return self.callPolicy.expectsCall
 
-class ExpectationProxy:
+class AndableExpectationProxy:
+    def __init__( self, expectation ):
+        self.__expectation = expectation
+
+    def andReturn( self, value ):
+        return self.andExecute( lambda : value )
+
+    def andRaise( self, exception ):
+        def Raise(): raise exception
+        return self.andExecute( Raise )
+
+    def andExecute( self, callable ):
+        self.__expectation.action = callable
+        return AndedExpectationProxy( self.__expectation )
+
+class CallableExpectationProxy:
     def __init__( self, expectation ):
         self.__expectation = expectation
 
     def __call__( self, *args, **kwds ):
+        return self.__withArguments( args, kwds )
+
+    def withArguments( self, *args, **kwds ):
+        return self.__withArguments( args, kwds )
+
+    def __withArguments( self, args, kwds ):
         self.__expectation.callPolicy = MethodCallPolicy( args, kwds )
-        return self
+        return CalledExpectationProxy( self.__expectation )
 
-    def andReturn( self, value ):
-        self.andExecute( lambda : value )
-        return self
+class ExpectationProxy( AndableExpectationProxy, CallableExpectationProxy ) :
+    def __init__( self, expectation ):
+        AndableExpectationProxy.__init__( self, expectation )
+        CallableExpectationProxy.__init__( self, expectation )
 
-    def andRaise( self, exception ):
-        def Raise(): raise exception
-        self.andExecute( Raise )
-        return self
+class CalledExpectationProxy( AndableExpectationProxy ):
+    def __init__( self, expectation ):
+        AndableExpectationProxy.__init__( self, expectation )
 
-    def andExecute( self, callable ):
-        self.__expectation.action = callable
-        return self
+class AndedExpectationProxy:
+    def __init__( self, expectation ):
+        pass
 
 class Expecter:
     def __init__( self, mock ):
