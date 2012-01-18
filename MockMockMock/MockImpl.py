@@ -27,7 +27,7 @@ class Expectation( object ):
     def expectsCall( self ):
         return self.callPolicy.expectsCall
 
-class AndableExpectationProxy:
+class BasicExpectationProxy:
     def __init__( self, expectation ):
         self.__expectation = expectation
 
@@ -40,10 +40,11 @@ class AndableExpectationProxy:
 
     def andExecute( self, callable ):
         self.__expectation.action = callable
-        return AndedExpectationProxy( self.__expectation )
+        return None
 
-class CallableExpectationProxy:
+class ExpectationProxy( BasicExpectationProxy ):
     def __init__( self, expectation ):
+        BasicExpectationProxy.__init__( self, expectation )
         self.__expectation = expectation
 
     def __call__( self, *args, **kwds ):
@@ -54,20 +55,7 @@ class CallableExpectationProxy:
 
     def __withArguments( self, args, kwds ):
         self.__expectation.callPolicy = MethodCallPolicy( args, kwds )
-        return CalledExpectationProxy( self.__expectation )
-
-class ExpectationProxy( AndableExpectationProxy, CallableExpectationProxy ) :
-    def __init__( self, expectation ):
-        AndableExpectationProxy.__init__( self, expectation )
-        CallableExpectationProxy.__init__( self, expectation )
-
-class CalledExpectationProxy( AndableExpectationProxy ):
-    def __init__( self, expectation ):
-        AndableExpectationProxy.__init__( self, expectation )
-
-class AndedExpectationProxy:
-    def __init__( self, expectation ):
-        pass
+        return BasicExpectationProxy( self.__expectation )
 
 class Expecter:
     def __init__( self, mock ):
