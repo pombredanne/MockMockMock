@@ -95,6 +95,12 @@ class SingleExpectation( unittest.TestCase ):
         self.mock.expect.foobar.andReturn( 42 )
         self.assertRaises( MockException, lambda : self.mock.object.barbaz )
 
+    def testTearDown( self ):
+        self.mock.expect.foobar
+        self.assertRaises( MockException, self.mock.tearDown )
+        self.mock.object.foobar
+        self.mock.tearDown()
+
 class ExpectationSequence( unittest.TestCase ):
     def setUp( self ):
         unittest.TestCase.setUp( self )
@@ -113,7 +119,6 @@ class ExpectationSequence( unittest.TestCase ):
         self.mock.expect.foo_4()
         self.mock.expect.foo_5()
         self.mock.expect.foo_6()
-
         self.mock.object.foo_1()
         self.mock.object.foo_2()
         self.mock.object.foo_3()
@@ -138,5 +143,6 @@ class ExpectationSequence( unittest.TestCase ):
 # Maybe mock.expect.foobar.withArguments( 42 ) could be a synonym for mock.expect.foobar( 42 ) and we could add a withArgumentsChecker to handle more complex cases
 # Transmit arguments to andExecute's callable (usefull when repeated): mock.expect.foobar( 12 ).andExecute( lambda n : n + 1 ).repeated( 5 )
 # Check that unordered property and method calls on the same name can happen
+# Derive a class from unittest.TestCase that provides a mock factory and auto-tearDowns the created mocks
 
 unittest.main()

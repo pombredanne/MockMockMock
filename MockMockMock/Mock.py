@@ -13,4 +13,4 @@ class Mock( object ):
         return self.__impl.object()
 
     def tearDown( self ):
-        pass
+        return self.__impl.tearDown()

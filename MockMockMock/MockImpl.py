@@ -106,3 +106,7 @@ class MockImpl( object ):
 
     def object( self ):
         return Checker( self )
+
+    def tearDown( self ):
+        if len( self.__expectations ) > 0:
+            raise MockException()
