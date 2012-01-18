@@ -54,11 +54,11 @@ class AttributeExpecter:
         self.__mock = mock
         self.__name = name
         self.__expectation = PropertyExpectation( name )
-        self.__mock.setExpectation( self.__expectation )
+        self.__mock.addExpectation( self.__expectation )
 
     def __call__( self, *args, **kwds ):
         call = MethodCallExpectation( self.__name, args, kwds )
-        self.__mock.setExpectation( call )
+        self.__mock.replaceExpectation( self.__expectation, call )
         return call
 
     def andReturn( self, value ):
@@ -82,7 +82,7 @@ class Checker:
         self.__mock = mock
 
     def __getattr__( self, name ):
-        expectation = self.__mock.getExpectation()
+        expectation = self.__mock.getLastExpectation()
         if expectation.name == name:
             if isinstance( expectation, MethodCallExpectation ):
                 return expectation
@@ -93,13 +93,19 @@ class Checker:
 
 class MockImpl( object ):
     def __init__( self ):
-        self.__expectation = None
+        self.__expectations = []
 
-    def setExpectation( self, expectation ):
-        self.__expectation = expectation
+    def addExpectation( self, expectation ):
+        self.__expectations.append( expectation )
 
-    def getExpectation( self ):
-        return self.__expectation
+    def replaceExpectation( self, oldExpectation, newExpectation ):
+        assert( self.__expectations[ -1 ] is oldExpectation )
+        self.__expectations[ -1 ] = newExpectation
+
+    def getLastExpectation( self ):
+        expectation = self.__expectations[ 0 ]
+        self.__expectations = self.__expectations[ 1: ]
+        return expectation
 
     def expect( self ):
         return Expecter( self )

@@ -62,9 +62,31 @@ class SingleExpectationTestCase( unittest.TestCase ):
         self.mock.expect.foobar.andReturn( 42 )
         self.assertRaises( MockException, lambda : self.mock.object.barbaz )
 
-    def tearDown( self ):
-        unittest.TestCase.tearDown( self )
-        self.mock.tearDown()
+class ExpectationSequenceTestCase( unittest.TestCase ):
+    def setUp( self ):
+        unittest.TestCase.setUp( self )
+        self.mock = Mock()
+
+    def testTwoCalls( self ):
+        self.mock.expect.foobar()
+        self.mock.expect.barbaz()
+        self.mock.object.foobar()
+        self.mock.object.barbaz()
+
+    def testManyCalls( self ):
+        self.mock.expect.foo_1()
+        self.mock.expect.foo_2()
+        self.mock.expect.foo_3()
+        self.mock.expect.foo_4()
+        self.mock.expect.foo_5()
+        self.mock.expect.foo_6()
+
+        self.mock.object.foo_1()
+        self.mock.object.foo_2()
+        self.mock.object.foo_3()
+        self.mock.object.foo_4()
+        self.mock.object.foo_5()
+        self.mock.object.foo_6()
 
 # Expect repetitions of calls
 # Expect group of calls in specific order
@@ -73,5 +95,6 @@ class SingleExpectationTestCase( unittest.TestCase ):
 # Alternate expectations and calls
 # Check that expected properties do not allow calls and vice versa
 # Make the Mock.object itself callable and expect this call
+# Check that forgeting the last call raises a MockException in Mock.tearDown
 
 unittest.main()
