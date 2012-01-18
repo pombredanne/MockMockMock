@@ -1,11 +1,41 @@
 import unittest
+from operator import isCallable # deprecated, but documented alternative requires __mro__ to be defined in callable class
 
 from MockMockMock import Mock, MockException
 
 class TestException( Exception ):
     pass
 
-class SingleExpectationTestCase( unittest.TestCase ):
+class PublicInterface( unittest.TestCase ):
+    def setUp( self ):
+        unittest.TestCase.setUp( self )
+        self.mock = Mock()
+
+    def testMock( self ):
+        self.assertEqual( self.dir( self.mock ), [ "expect", "object", "tearDown" ] )
+
+    def testExpect( self ):
+        self.assertEqual( self.dir( self.mock.expect ), [] )
+
+    def testExpectation( self ):
+        self.assertEqual( self.dir( self.mock.expect.foobar ), [ "andExecute", "andRaise", "andReturn", "withArguments" ] )
+        self.assertTrue( isCallable( self.mock.expect.barbaz ) )
+
+    def testCalledExpectation_1( self ):
+        self.assertEqual( self.dir( self.mock.expect.foobar( 42 ) ), [ "andExecute", "andRaise", "andReturn" ] )
+        self.assertFalse( isCallable( self.mock.expect.barbaz( 42 ) ) )
+
+    def testCalledExpectation_2( self ):
+        self.assertEqual( self.dir( self.mock.expect.foobar.withArguments( 42 ) ), [ "andExecute", "andRaise", "andReturn" ] )
+        self.assertFalse( isCallable( self.mock.expect.barbaz.withArguments( 42 ) ) )
+
+    def testObject( self ):
+        self.assertEqual( self.dir( self.mock.object ), [] )
+
+    def dir( self, o ):
+        return sorted( a for a in dir( o ) if not a.startswith( "_" ) )
+
+class SingleExpectation( unittest.TestCase ):
     def setUp( self ):
         unittest.TestCase.setUp( self )
         self.mock = Mock()
@@ -62,7 +92,7 @@ class SingleExpectationTestCase( unittest.TestCase ):
         self.mock.expect.foobar.andReturn( 42 )
         self.assertRaises( MockException, lambda : self.mock.object.barbaz )
 
-class ExpectationSequenceTestCase( unittest.TestCase ):
+class ExpectationSequence( unittest.TestCase ):
     def setUp( self ):
         unittest.TestCase.setUp( self )
         self.mock = Mock()
