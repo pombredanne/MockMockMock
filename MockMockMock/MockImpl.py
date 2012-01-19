@@ -1,13 +1,4 @@
-import MockException
-
-class ArgumentsChecker:
-    def __init__( self, args, kwds ):
-        self.__args = args
-        self.__kwds = kwds
-
-    def check( self, args, kwds ):
-        if self.__args != args or self.__kwds != kwds:
-            raise MockException.MockException()
+from MockException import MockException
 
 class Actionable( object ):
     def __init__( self ):
@@ -15,68 +6,70 @@ class Actionable( object ):
 
     def andReturn( self, value ):
         self.andExecute( lambda : value )
+        return self
 
     def andRaise( self, exception ):
         def Raise(): raise exception
         self.andExecute( Raise )
+        return self
 
     def andExecute( self, callable ):
         self.__action = callable
+        return self
 
     @property
     def action( self ):
         return self.__action
 
-class MethodCallExpectation( Actionable ):
-    def __init__( self, name, args, kwds ):
-        Actionable.__init__( self )
-        self.__name = name
-        self.__argumentsChecker = ArgumentsChecker( args, kwds )
+class PropertyCallPolicy( object ):
+    @property
+    def expectsCall( self ):
+        return False
+
+class MethodCallPolicy( object ):
+    def __init__( self, args, kwds ):
+        self.__args = args
+        self.__kwds = kwds
 
     @property
-    def name( self ):
-        return self.__name
+    def expectsCall( self ):
+        return True
 
-    def __call__( self, *args, **kwds ):
-        self.__argumentsChecker.check( args, kwds )
-        return self.action()
+    def checkCall( self, args, kwds ):
+        return self.__args == args and self.__kwds == kwds
 
-class PropertyExpectation( Actionable ):
+class Expectation( Actionable ):
     def __init__( self, name ):
-        self.__name = name
-
-    @property
-    def name( self ):
-        return self.__name
-
-class AttributeExpecter:
-    def __init__( self, mock, name ):
-        self.__mock = mock
-        self.__name = name
-        self.__expectation = PropertyExpectation( name )
-        self.__mock.addExpectation( self.__expectation )
+        Actionable.__init__( self )
+        self.name = name
+        self.callPolicy = PropertyCallPolicy()
 
     def __call__( self, *args, **kwds ):
-        call = MethodCallExpectation( self.__name, args, kwds )
-        self.__mock.replaceExpectation( self.__expectation, call )
-        return call
+        self.callPolicy = MethodCallPolicy( args, kwds )
+        return self
 
-    def andReturn( self, value ):
-        self.__expectation.andReturn( value )
-
-    def andRaise( self, exception ):
-        self.__expectation.andRaise( exception )
-
-    def andExecute( self, callable ):
-        self.__expectation.andExecute( callable )
+    @property
+    def expectsCall( self ):
+        return self.callPolicy.expectsCall
 
 class Expecter:
     def __init__( self, mock ):
         self.__mock = mock
 
     def __getattr__( self, name ):
-        return AttributeExpecter( self.__mock, name )
-       
+        expectation = Expectation( name )
+        self.__mock.addExpectation( expectation )
+        return expectation
+
+class CallChecker:
+    def __init__( self, expectation ):
+        self.__expectation = expectation
+
+    def __call__( self, *args, **kwds ):
+        if not self.__expectation.callPolicy.checkCall( args, kwds ):
+            raise MockException()
+        return self.__expectation.action()
+
 class Checker:
     def __init__( self, mock ):
         self.__mock = mock
@@ -84,12 +77,12 @@ class Checker:
     def __getattr__( self, name ):
         expectation = self.__mock.getLastExpectation()
         if expectation.name == name:
-            if isinstance( expectation, MethodCallExpectation ):
-                return expectation
+            if expectation.expectsCall:
+                return CallChecker( expectation )
             else:
                 return expectation.action()
         else:
-            raise MockException.MockException()
+            raise MockException()
 
 class MockImpl( object ):
     def __init__( self ):
@@ -97,10 +90,6 @@ class MockImpl( object ):
 
     def addExpectation( self, expectation ):
         self.__expectations.append( expectation )
-
-    def replaceExpectation( self, oldExpectation, newExpectation ):
-        assert( self.__expectations[ -1 ] is oldExpectation )
-        self.__expectations[ -1 ] = newExpectation
 
     def getLastExpectation( self ):
         expectation = self.__expectations[ 0 ]
