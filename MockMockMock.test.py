@@ -112,6 +112,16 @@ class ExpectationSequence( unittest.TestCase ):
         self.mock.object.foobar()
         self.mock.object.barbaz()
 
+    def testCallNotExpectedFirst( self ):
+        self.mock.expect.foobar()
+        self.mock.expect.barbaz()
+        self.assertRaises( MockException, lambda : self.mock.object.barbaz() )
+
+    def testCallWithArgumentsNotExpectedFirst( self ):
+        self.mock.expect.foobar( 42 )
+        self.mock.expect.foobar( 43 )
+        self.assertRaises( MockException, lambda : self.mock.object.foobar( 43 ) )
+
     def testManyCalls( self ):
         self.mock.expect.foo_1()
         self.mock.expect.foo_2()
@@ -144,5 +154,6 @@ class ExpectationSequence( unittest.TestCase ):
 # Transmit arguments to andExecute's callable (usefull when repeated): mock.expect.foobar( 12 ).andExecute( lambda n : n + 1 ).repeated( 5 )
 # Check that unordered property and method calls on the same name can happen
 # Derive a class from unittest.TestCase that provides a mock factory and auto-tearDowns the created mocks
+# Manage expectations from several Mocks: they shall be ordered globaly or on a given Mock collection
 
 unittest.main()
