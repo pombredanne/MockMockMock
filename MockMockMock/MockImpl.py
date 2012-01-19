@@ -92,7 +92,7 @@ class Checker:
             else:
                 return expectation.action()
         else:
-            raise MockException()
+            raise MockException( self.__mock.name + "." + name + " called instead of " + expectation.name )
 
 class MockImpl( object ):
     def __init__( self, name ):
@@ -115,4 +115,4 @@ class MockImpl( object ):
 
     def tearDown( self ):
         if len( self.__expectations ) > 0:
-            raise MockException()
+            raise MockException( self.name + "." + self.__expectations[ 0 ].name + " not called" )

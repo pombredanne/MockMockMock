@@ -93,18 +93,21 @@ class SingleExpectation( unittest.TestCase ):
 
     def testCallWithBadName( self ):
         self.mock.expect.foobar()
-        with self.assertRaises( MockException ):
+        with self.assertRaises( MockException ) as cm:
             self.mock.object.barbaz()
+        self.assertEqual( cm.exception.message, "MyMock.barbaz called instead of foobar" )
 
     def testPropertyWithBadName( self ):
         self.mock.expect.foobar.andReturn( 42 )
-        with self.assertRaises( MockException ):
+        with self.assertRaises( MockException ) as cm:
             self.mock.object.barbaz
+        self.assertEqual( cm.exception.message, "MyMock.barbaz called instead of foobar" )
 
     def testTearDown( self ):
         self.mock.expect.foobar
-        with self.assertRaises( MockException ):
+        with self.assertRaises( MockException ) as cm:
             self.mock.tearDown()
+        self.assertEqual( cm.exception.message, "MyMock.foobar not called" )
         self.mock.object.foobar
         self.mock.tearDown()
 
@@ -129,8 +132,9 @@ class ExpectationSequence( unittest.TestCase ):
     def testCallWithArgumentsNotExpectedFirst( self ):
         self.mock.expect.foobar( 42 )
         self.mock.expect.foobar( 43 )
-        with self.assertRaises( MockException ):
+        with self.assertRaises( MockException ) as cm:
             self.mock.object.foobar( 43 )
+        self.assertEqual( cm.exception.message, "MyMock.foobar called with bad arguments" )
 
     def testManyCalls( self ):
         self.mock.expect.foo_1()
