@@ -62,6 +62,8 @@ class Expecter:
         self.__mock = mock
 
     def __getattr__( self, name ):
+        if name == "__dir__":
+            raise AttributeError()
         expectation = Expectation( name )
         self.__mock.addExpectation( expectation )
         return ExpectationProxy( expectation )
@@ -80,6 +82,8 @@ class Checker:
         self.__mock = mock
 
     def __getattr__( self, name ):
+        if name == "__dir__":
+            raise AttributeError()
         expectation = self.__mock.getLastExpectation()
         if expectation.name == name:
             if expectation.expectsCall:
