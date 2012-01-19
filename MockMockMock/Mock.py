@@ -1,8 +1,8 @@
 import MockImpl
 
 class Mock( object ):
-    def __init__( self ):
-        self.__impl = MockImpl.MockImpl()
+    def __init__( self, name ):
+        self.__impl = MockImpl.MockImpl( name )
 
     @property
     def expect( self ):

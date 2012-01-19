@@ -9,7 +9,7 @@ class TestException( Exception ):
 class PublicInterface( unittest.TestCase ):
     def setUp( self ):
         unittest.TestCase.setUp( self )
-        self.mock = Mock()
+        self.mock = Mock( "MyMock" )
 
     def testMock( self ):
         self.assertEqual( self.dir( self.mock ), [ "expect", "object", "tearDown" ] )
@@ -41,7 +41,7 @@ class PublicInterface( unittest.TestCase ):
 class SingleExpectation( unittest.TestCase ):
     def setUp( self ):
         unittest.TestCase.setUp( self )
-        self.mock = Mock()
+        self.mock = Mock( "MyMock" )
 
     def testCall( self ):
         self.mock.expect.foobar()
@@ -61,11 +61,13 @@ class SingleExpectation( unittest.TestCase ):
 
     def testCallWithRaise( self ):
         self.mock.expect.foobar().andRaise( TestException() )
-        self.assertRaises( TestException, lambda : self.mock.object.foobar() )
+        with self.assertRaises( TestException ):
+            self.mock.object.foobar()
 
     def testPropertyWithRaise( self ):
         self.mock.expect.foobar.andRaise( TestException() )
-        self.assertRaises( TestException, lambda : self.mock.object.foobar )
+        with self.assertRaises( TestException ):
+            self.mock.object.foobar
 
     def testCallWithSpecificAction( self ):
         self.check = False
@@ -85,26 +87,31 @@ class SingleExpectation( unittest.TestCase ):
 
     def testCallWithBadArgument( self ):
         self.mock.expect.foobar( 42 )
-        self.assertRaises( MockException, lambda : self.mock.object.foobar( 43 ) )
+        with self.assertRaises( MockException ) as cm:
+            self.mock.object.foobar( 43 )
+        self.assertEqual( cm.exception.message, "MyMock.foobar called with bad arguments" )
 
     def testCallWithBadName( self ):
         self.mock.expect.foobar()
-        self.assertRaises( MockException, lambda : self.mock.object.barbaz() )
+        with self.assertRaises( MockException ):
+            self.mock.object.barbaz()
 
     def testPropertyWithBadName( self ):
         self.mock.expect.foobar.andReturn( 42 )
-        self.assertRaises( MockException, lambda : self.mock.object.barbaz )
+        with self.assertRaises( MockException ):
+            self.mock.object.barbaz
 
     def testTearDown( self ):
         self.mock.expect.foobar
-        self.assertRaises( MockException, self.mock.tearDown )
+        with self.assertRaises( MockException ):
+            self.mock.tearDown()
         self.mock.object.foobar
         self.mock.tearDown()
 
 class ExpectationSequence( unittest.TestCase ):
     def setUp( self ):
         unittest.TestCase.setUp( self )
-        self.mock = Mock()
+        self.mock = Mock( "MyMock" )
 
     def testTwoCalls( self ):
         self.mock.expect.foobar()
@@ -116,12 +123,14 @@ class ExpectationSequence( unittest.TestCase ):
     def testCallNotExpectedFirst( self ):
         self.mock.expect.foobar()
         self.mock.expect.barbaz()
-        self.assertRaises( MockException, lambda : self.mock.object.barbaz() )
+        with self.assertRaises( MockException):
+            self.mock.object.barbaz()
 
     def testCallWithArgumentsNotExpectedFirst( self ):
         self.mock.expect.foobar( 42 )
         self.mock.expect.foobar( 43 )
-        self.assertRaises( MockException, lambda : self.mock.object.foobar( 43 ) )
+        with self.assertRaises( MockException ):
+            self.mock.object.foobar( 43 )
 
     def testManyCalls( self ):
         self.mock.expect.foo_1()
@@ -146,7 +155,7 @@ class ExpectationSequence( unittest.TestCase ):
 class ExpectationAndCallAlternation( unittest.TestCase ):
     def setUp( self ):
         unittest.TestCase.setUp( self )
-        self.mock = Mock()
+        self.mock = Mock( "MyMock" )
 
     def test( self ):
         self.mock.expect.foobar( 42 )

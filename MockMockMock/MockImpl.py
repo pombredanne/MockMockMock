@@ -69,12 +69,13 @@ class Expecter:
         return ExpectationProxy( expectation )
 
 class CallChecker:
-    def __init__( self, expectation ):
+    def __init__( self, mock, expectation ):
         self.__expectation = expectation
+        self.__mock = mock
 
     def __call__( self, *args, **kwds ):
         if not self.__expectation.callPolicy.checkCall( args, kwds ):
-            raise MockException()
+            raise MockException( self.__mock.name + "." + self.__expectation.name + " called with bad arguments" )
         return self.__expectation.action()
 
 class Checker:
@@ -87,15 +88,16 @@ class Checker:
         expectation = self.__mock.getLastExpectation()
         if expectation.name == name:
             if expectation.expectsCall:
-                return CallChecker( expectation )
+                return CallChecker( self.__mock, expectation )
             else:
                 return expectation.action()
         else:
             raise MockException()
 
 class MockImpl( object ):
-    def __init__( self ):
+    def __init__( self, name ):
         self.__expectations = []
+        self.name = name
 
     def addExpectation( self, expectation ):
         self.__expectations.append( expectation )
