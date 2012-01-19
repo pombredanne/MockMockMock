@@ -111,6 +111,7 @@ class ExpectationSequence( unittest.TestCase ):
         self.mock.expect.barbaz()
         self.mock.object.foobar()
         self.mock.object.barbaz()
+        self.mock.tearDown()
 
     def testCallNotExpectedFirst( self ):
         self.mock.expect.foobar()
@@ -135,17 +136,31 @@ class ExpectationSequence( unittest.TestCase ):
         self.mock.object.foo_4()
         self.mock.object.foo_5()
         self.mock.object.foo_6()
+        self.mock.tearDown()
 
     # def testRepeatedCall( self ):
         # self.mock.expect.foobar( 42 ).andReturn( 53 ).repeated( 3 )
         # for i in range( 3 ):
             # self.assertEqual( self.mock.object.foobar( 42 ), 53 )
 
+class ExpectationAndCallAlternation( unittest.TestCase ):
+    def setUp( self ):
+        unittest.TestCase.setUp( self )
+        self.mock = Mock()
+
+    def test( self ):
+        self.mock.expect.foobar( 42 )
+        self.mock.expect.foobar( 43 )
+        self.mock.object.foobar( 42 )
+        self.mock.expect.foobar( 44 )
+        self.mock.object.foobar( 43 )
+        self.mock.object.foobar( 44 )
+        self.mock.tearDown()
+
 # Expect repetitions of calls
 # Expect group of calls in specific order
 # Expect group of calls in any order
 # Expect facultative calls
-# Alternate expectations and calls
 # Check that expected properties do not allow calls and vice versa
 # Make the Mock.object itself callable and expect this call
 # Check that forgeting the last call raises a MockException in Mock.tearDown
