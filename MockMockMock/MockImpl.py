@@ -64,7 +64,7 @@ class Expecter:
     def __getattr__( self, name ):
         if name == "__dir__":
             raise AttributeError()
-        expectation = Expectation( name )
+        expectation = Expectation( self.__mock.name + "." + name )
         self.__mock.addExpectation( expectation )
         return ExpectationProxy( expectation )
 
@@ -75,7 +75,7 @@ class CallChecker:
 
     def __call__( self, *args, **kwds ):
         if not self.__expectation.callPolicy.checkCall( args, kwds ):
-            raise MockException( self.__mock.name + "." + self.__expectation.name + " called with bad arguments" )
+            raise MockException( self.__expectation.name + " called with bad arguments" )
         return self.__expectation.action()
 
 class Checker:
@@ -86,18 +86,18 @@ class Checker:
         if name == "__dir__":
             raise AttributeError()
         expectation = self.__mock.getLastExpectation()
-        if expectation.name == name:
+        calledName = self.__mock.name + "." + name
+        if expectation.name == calledName:
             if expectation.expectsCall:
                 return CallChecker( self.__mock, expectation )
             else:
                 return expectation.action()
         else:
-            raise MockException( self.__mock.name + "." + name + " called instead of " + expectation.name )
+            raise MockException( calledName + " called instead of " + expectation.name )
 
-class MockImpl( object ):
-    def __init__( self, name ):
+class MockEngine( object ):
+    def __init__( self ):
         self.__expectations = []
-        self.name = name
 
     def addExpectation( self, expectation ):
         self.__expectations.append( expectation )
@@ -106,6 +106,24 @@ class MockImpl( object ):
         expectation = self.__expectations[ 0 ]
         self.__expectations = self.__expectations[ 1: ]
         return expectation
+            
+    def tearDown( self ):
+        if len( self.__expectations ) > 0:
+            raise MockException( self.__expectations[ 0 ].name + " not called" )
+
+class MockImpl( object ):
+    def __init__( self, name, brotherMock ):
+        if brotherMock is None:
+            self.__engine = MockEngine()
+        else:
+            self.__engine = brotherMock.__engine
+        self.name = name
+
+    def addExpectation( self, expectation ):
+        self.__engine.addExpectation( expectation )
+
+    def getLastExpectation( self ):
+        return self.__engine.getLastExpectation()
 
     def expect( self ):
         return Expecter( self )
@@ -114,5 +132,4 @@ class MockImpl( object ):
         return Checker( self )
 
     def tearDown( self ):
-        if len( self.__expectations ) > 0:
-            raise MockException( self.name + "." + self.__expectations[ 0 ].name + " not called" )
+        self.__engine.tearDown()

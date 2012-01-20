@@ -1,8 +1,11 @@
 import MockImpl
 
 class Mock( object ):
-    def __init__( self, name ):
-        self.__impl = MockImpl.MockImpl( name )
+    def __init__( self, name, brotherMock = None ):
+        if brotherMock is None:
+            self.__impl = MockImpl.MockImpl( name, None )
+        else:
+            self.__impl = MockImpl.MockImpl( name, brotherMock.__impl )
 
     @property
     def expect( self ):

@@ -95,13 +95,13 @@ class SingleExpectation( unittest.TestCase ):
         self.mock.expect.foobar()
         with self.assertRaises( MockException ) as cm:
             self.mock.object.barbaz()
-        self.assertEqual( cm.exception.message, "MyMock.barbaz called instead of foobar" )
+        self.assertEqual( cm.exception.message, "MyMock.barbaz called instead of MyMock.foobar" )
 
     def testPropertyWithBadName( self ):
         self.mock.expect.foobar.andReturn( 42 )
         with self.assertRaises( MockException ) as cm:
             self.mock.object.barbaz
-        self.assertEqual( cm.exception.message, "MyMock.barbaz called instead of foobar" )
+        self.assertEqual( cm.exception.message, "MyMock.barbaz called instead of MyMock.foobar" )
 
     def testTearDown( self ):
         self.mock.expect.foobar
@@ -155,6 +155,48 @@ class ExpectationSequence( unittest.TestCase ):
         # self.mock.expect.foobar( 42 ).andReturn( 53 ).repeated( 3 )
         # for i in range( 3 ):
             # self.assertEqual( self.mock.object.foobar( 42 ), 53 )
+
+class SequenceBetweenSeveralLinkedMocks( unittest.TestCase ):
+    def setUp( self ):
+        unittest.TestCase.setUp( self )
+        self.m1 = Mock( "m1" )
+        self.m2 = Mock( "m2", self.m1 )
+        self.m3 = Mock( "m3", self.m1 )
+
+    def testShortCorrectSequence( self ):
+        self.m1.expect.foobar( 42 )
+        self.m2.expect.barbaz( 43 )
+        self.m1.object.foobar( 42 )
+        self.m2.object.barbaz( 43 )
+        self.m1.tearDown()
+
+    def testShortInvertedSequence( self ):
+        self.m1.expect.foobar( 42 )
+        self.m2.expect.barbaz( 43 )
+        with self.assertRaises( MockException ) as cm:
+            self.m2.object.barbaz( 43 )
+
+class SequenceBetweenSeveralIndependentMocks( unittest.TestCase ):
+    def setUp( self ):
+        unittest.TestCase.setUp( self )
+        self.m1 = Mock( "m1" )
+        self.m2 = Mock( "m2" )
+
+    def testSameOrderSequence( self ):
+        self.m1.expect.foobar( 42 )
+        self.m2.expect.barbaz( 43 )
+        self.m1.object.foobar( 42 )
+        self.m2.object.barbaz( 43 )
+        self.m1.tearDown()
+        self.m2.tearDown()
+
+    def testOtherOrderSequence( self ):
+        self.m1.expect.foobar( 42 )
+        self.m2.expect.barbaz( 43 )
+        self.m2.object.barbaz( 43 )
+        self.m1.object.foobar( 42 )
+        self.m1.tearDown()
+        self.m2.tearDown()
 
 class ExpectationAndCallAlternation( unittest.TestCase ):
     def setUp( self ):
