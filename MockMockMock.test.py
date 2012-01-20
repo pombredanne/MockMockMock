@@ -2,6 +2,7 @@ import unittest
 from operator import isCallable # deprecated, but documented alternative requires __mro__ to be defined in callable class
 
 from MockMockMock import Mock, MockException
+import MockMockMock.ArgumentCheckers as Checkers
 
 class TestException( Exception ):
     pass
@@ -230,6 +231,34 @@ class ExpectationAndCallAlternation( unittest.TestCase ):
         self.mock.object.foobar( 44 )
         self.mock.tearDown()
 
+class ArgumentCheckers( unittest.TestCase ):
+    # def testIdentityChecker( self ):
+
+    def testEqualityChecker( self ):
+        c = Checkers.Equality( ( 1, 2, 3 ), { 1: 1, 2: 2, 3: 3 } )
+        self.assertTrue( c( ( 1, 2, 3 ), { 1: 1, 2: 2, 3: 3 } ) )
+        self.assertFalse( c( ( 1, 2, 3 ), { 1: 1, 2: 2, 3: 4 } ) )
+        self.assertFalse( c( ( 1, 2, 4 ), { 1: 1, 2: 2, 3: 3 } ) )
+    
+    # def testTypeChecker( self ):
+    
+    # def testRangeChecker( self ):
+
+    def testCheckerIsUsedByCall( self ):
+        # We use a mock...
+        checker = Mock( "checker" )
+        checker.expect( ( 12, ), {} ).andReturn( True )
+        checker.expect( ( 13, ), {} ).andReturn( False )
+    
+        # ...to test a mock!
+        m = Mock( "m" )
+        m.expect.foobar.withArguments( checker.object ).andReturn( 42 )
+        m.expect.foobar.withArguments( checker.object ).andReturn( 43 )
+        self.assertEqual( m.object.foobar( 12 ), 42 )
+        with self.assertRaises( MockException ) as cm:
+            m.object.foobar( 13 )
+        self.assertEqual( cm.exception.message, "m.foobar called with bad arguments" )
+        
 # Expect group of calls in any order
 # Expect group of calls in specific order
 # Expect facultative calls

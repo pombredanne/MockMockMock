@@ -1,4 +1,5 @@
 from MockException import MockException
+import ArgumentCheckers
 
 class PropertyCallPolicy( object ):
     @property
@@ -6,16 +7,15 @@ class PropertyCallPolicy( object ):
         return False
 
 class MethodCallPolicy( object ):
-    def __init__( self, args, kwds ):
-        self.__args = args
-        self.__kwds = kwds
+    def __init__( self, checker ):
+        self.__checker = checker
 
     @property
     def expectsCall( self ):
         return True
 
     def checkCall( self, args, kwds ):
-        return self.__args == args and self.__kwds == kwds
+        return self.__checker( args, kwds )
 
 class Expectation( object ):
     def __init__( self, name ):
@@ -48,13 +48,10 @@ class ExpectationProxy( BasicExpectationProxy ):
         self.__expectation = expectation
 
     def __call__( self, *args, **kwds ):
-        return self.__withArguments( args, kwds )
+        return self.withArguments( ArgumentCheckers.Equality( args, kwds ) )
 
-    def withArguments( self, *args, **kwds ):
-        return self.__withArguments( args, kwds )
-
-    def __withArguments( self, args, kwds ):
-        self.__expectation.callPolicy = MethodCallPolicy( args, kwds )
+    def withArguments( self, checker ):
+        self.__expectation.callPolicy = MethodCallPolicy( checker )
         return BasicExpectationProxy( self.__expectation )
 
 class Expecter:
