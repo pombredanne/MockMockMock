@@ -13,9 +13,11 @@ class PublicInterface( unittest.TestCase ):
 
     def testMock( self ):
         self.assertEqual( self.dir( self.mock ), [ "expect", "object", "tearDown" ] )
+        self.assertFalse( isCallable( self.mock ) )
 
     def testExpect( self ):
         self.assertEqual( self.dir( self.mock.expect ), [] )
+        self.assertTrue( isCallable( self.mock.expect ) )
 
     def testExpectation( self ):
         self.assertEqual( self.dir( self.mock.expect.foobar ), [ "andExecute", "andRaise", "andReturn", "withArguments" ] )
@@ -27,10 +29,21 @@ class PublicInterface( unittest.TestCase ):
         self.assertEqual( self.dir( self.mock.expect.foobar.withArguments( 42 ) ), [ "andExecute", "andRaise", "andReturn" ] )
         self.assertFalse( isCallable( self.mock.expect.foobar.withArguments( 42 ) ) )
 
+    def testCalledThenAndedExpectation( self ):
+        self.assertEqual( self.dir( self.mock.expect.foobar( 42 ).andReturn( 12 ) ), [] )
+        self.assertFalse( isCallable( self.mock.expect.foobar( 42 ).andReturn( 12 ) ) )
+        self.assertEqual( self.dir( self.mock.expect.foobar( 42 ).andRaise( TestException() ) ), [] )
+        self.assertFalse( isCallable( self.mock.expect.foobar( 42 ).andRaise( TestException() ) ) )
+        self.assertEqual( self.dir( self.mock.expect.foobar( 42 ).andExecute( lambda : 12 ) ), [] )
+        self.assertFalse( isCallable( self.mock.expect.foobar( 42 ).andExecute( lambda : 12 ) ) )
+
     def testAndedExpectation( self ):
-        self.assertEqual( self.dir( self.mock.expect.foobar.withArguments( 42 ).andReturn( 12 ) ), [] )
-        self.assertEqual( self.dir( self.mock.expect.foobar.withArguments( 42 ).andRaise( TestException() ) ), [] )
-        self.assertEqual( self.dir( self.mock.expect.foobar.withArguments( 42 ).andExecute( lambda : 12 ) ), [] )
+        self.assertEqual( self.dir( self.mock.expect.foobar.andReturn( 12 ) ), [] )
+        self.assertFalse( isCallable( self.mock.expect.foobar.andReturn( 12 ) ) )
+        self.assertEqual( self.dir( self.mock.expect.foobar.andRaise( TestException() ) ), [] )
+        self.assertFalse( isCallable( self.mock.expect.foobar.andRaise( TestException() ) ) )
+        self.assertEqual( self.dir( self.mock.expect.foobar.andExecute( lambda : 12 ) ), [] )
+        self.assertFalse( isCallable( self.mock.expect.foobar.andExecute( lambda : 12 ) ) )
 
     def testObject( self ):
         self.assertEqual( self.dir( self.mock.object ), [] )
