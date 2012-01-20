@@ -56,15 +56,15 @@ class SingleExpectation( unittest.TestCase ):
         unittest.TestCase.setUp( self )
         self.mock = Mock( "MyMock" )
 
-    def testCall( self ):
+    def testMethodCall( self ):
         self.mock.expect.foobar()
         self.mock.object.foobar()
 
-    def testCallWithSimpleArgument( self ):
+    def testMethodCallWithSimpleArgument( self ):
         self.mock.expect.foobar( 42 )
         self.mock.object.foobar( 42 )
 
-    def testCallWithReturn( self ):
+    def testMethodCallWithReturn( self ):
         self.mock.expect.foobar().andReturn( 42 )
         self.assertEqual( self.mock.object.foobar(), 42 )
 
@@ -72,7 +72,11 @@ class SingleExpectation( unittest.TestCase ):
         self.mock.expect.foobar.andReturn( 42 )
         self.assertEqual( self.mock.object.foobar, 42 )
 
-    def testCallWithRaise( self ):
+    def testObjectCallWithArgumentsAndReturn( self ):
+        self.mock.expect( 43, 44 ).andReturn( 42 )
+        self.assertEqual( self.mock.object( 43, 44 ), 42 )
+
+    def testMethodCallWithRaise( self ):
         self.mock.expect.foobar().andRaise( TestException() )
         with self.assertRaises( TestException ):
             self.mock.object.foobar()
@@ -82,7 +86,7 @@ class SingleExpectation( unittest.TestCase ):
         with self.assertRaises( TestException ):
             self.mock.object.foobar
 
-    def testCallWithSpecificAction( self ):
+    def testMethodCallWithSpecificAction( self ):
         self.check = False
         def f():
             self.check = True
@@ -98,13 +102,13 @@ class SingleExpectation( unittest.TestCase ):
         self.mock.object.foobar
         self.assertTrue( self.check )
 
-    def testCallWithBadArgument( self ):
+    def testMethodCallWithBadArgument( self ):
         self.mock.expect.foobar( 42 )
         with self.assertRaises( MockException ) as cm:
             self.mock.object.foobar( 43 )
         self.assertEqual( cm.exception.message, "MyMock.foobar called with bad arguments" )
 
-    def testCallWithBadName( self ):
+    def testMethodCallWithBadName( self ):
         self.mock.expect.foobar()
         with self.assertRaises( MockException ) as cm:
             self.mock.object.barbaz()
@@ -230,13 +234,10 @@ class ExpectationAndCallAlternation( unittest.TestCase ):
 # Expect group of calls in any order
 # Expect facultative calls
 # Check that expected properties do not allow calls and vice versa
-# Make the Mock.object itself callable and expect this call
-# Check that forgeting the last call raises a MockException in Mock.tearDown
 # Allow other arguments checking than simple constants
 # Maybe mock.expect.foobar.withArguments( 42 ) could be a synonym for mock.expect.foobar( 42 ) and we could add a withArgumentsChecker to handle more complex cases
 # Transmit arguments to andExecute's callable (usefull when repeated): mock.expect.foobar( 12 ).andExecute( lambda n : n + 1 ).repeated( 5 )
 # Check that unordered property and method calls on the same name can happen
 # Derive a class from unittest.TestCase that provides a mock factory and auto-tearDowns the created mocks
-# Manage expectations from several Mocks: they shall be ordered globaly or on a given Mock collection
 
 unittest.main()

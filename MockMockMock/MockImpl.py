@@ -62,6 +62,7 @@ class Expecter:
         self.__mock = mock
 
     def __getattr__( self, name ):
+        # Note that accepting name == "__call__" allows the mock object to be callable with no specific code
         if name == "__dir__":
             raise AttributeError()
         expectation = Expectation( self.__mock.name + "." + name )
