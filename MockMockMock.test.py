@@ -65,8 +65,9 @@ class SingleExpectation( unittest.TestCase ):
         self.mock.object.foobar( 42 )
 
     def testMethodCallWithReturn( self ):
-        self.mock.expect.foobar().andReturn( 42 )
-        self.assertEqual( self.mock.object.foobar(), 42 )
+        returnValue = object()
+        self.mock.expect.foobar().andReturn( returnValue )
+        self.assertTrue( self.mock.object.foobar() is returnValue )
 
     def testPropertyWithReturn( self ):
         self.mock.expect.foobar.andReturn( 42 )
@@ -229,15 +230,18 @@ class ExpectationAndCallAlternation( unittest.TestCase ):
         self.mock.object.foobar( 44 )
         self.mock.tearDown()
 
-# Expect repetitions of calls
-# Expect group of calls in specific order
 # Expect group of calls in any order
+# Expect group of calls in specific order
 # Expect facultative calls
-# Check that expected properties do not allow calls and vice versa
+# Expect repetitions of calls
+
 # Allow other arguments checking than simple constants
 # Maybe mock.expect.foobar.withArguments( 42 ) could be a synonym for mock.expect.foobar( 42 ) and we could add a withArgumentsChecker to handle more complex cases
-# Transmit arguments to andExecute's callable (usefull when repeated): mock.expect.foobar( 12 ).andExecute( lambda n : n + 1 ).repeated( 5 )
+# Transmit arguments to andExecute's callable (usefull when repeated, or with other arguments checkers): mock.expect.foobar( 12 ).andExecute( lambda n : n + 1 ).repeated( 5 )
+
+# Check that expected properties do not allow calls and vice versa
 # Check that unordered property and method calls on the same name can happen
+
 # Derive a class from unittest.TestCase that provides a mock factory and auto-tearDowns the created mocks
 
 unittest.main()
