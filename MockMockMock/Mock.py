@@ -15,5 +15,13 @@ class Mock( object ):
     def object( self ):
         return self.__impl.object()
 
+    @property
+    def unordered( self ):
+        return self.__impl.unordered()
+
+    @property
+    def ordered( self ):
+        return self.__impl.ordered()
+
     def tearDown( self ):
         return self.__impl.tearDown()
