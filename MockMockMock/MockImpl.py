@@ -27,6 +27,12 @@ class Expectation( object ):
     def expectsCall( self ):
         return self.callPolicy.expectsCall
 
+    def getCurrentPossibleExpectations( self ):
+        return [ self ]
+
+    def requiredCalls( self ):
+        return [ self ]
+
 class BasicExpectationProxy:
     def __init__( self, expectation ):
         self.__expectation = expectation
@@ -103,14 +109,42 @@ class OrderedExpectationGroup:
         self.__expectations.append( expectation )
 
     def getCurrentPossibleExpectations( self ):
-        return self.__expectations[ 0 : 1 ]
+        return self.__expectations[ 0 ].getCurrentPossibleExpectations()
 
     def removeExpectation( self, expectation ):
-        assert( expectation is self.__expectations[ 0 ] )
-        self.__expectations = self.__expectations[ 1 : ]
+        if expectation is self.__expectations[ 0 ]:
+            self.__expectations = self.__expectations[ 1 : ]
+        else:
+            self.__expectations[ 0 ].removeExpectation( expectation )
 
     def requiredCalls( self ):
-        return [ e.name for e in self.__expectations ]
+        required = []
+        for expectation in self.__expectations:
+            required += expectation.requiredCalls()
+        return required
+
+class UnorderedExpectationGroup:
+    def __init__( self ):
+        self.__expectations = []
+
+    def addExpectation( self, expectation ):
+        self.__expectations.append( expectation )
+
+    def getCurrentPossibleExpectations( self ):
+        possible = []
+        for expectation in self.__expectations:
+            possible += expectation.getCurrentPossibleExpectations()
+        return possible
+
+    def removeExpectation( self, expectation ):
+        assert( expectation in self.__expectations )
+        self.__expectations.remove( expectation )
+
+    def requiredCalls( self ):
+        required = []
+        for expectation in self.__expectations:
+            required += expectation.requiredCalls()
+        return required
 
 class MockEngine( object ):
     def __init__( self ):
@@ -133,7 +167,15 @@ class MockEngine( object ):
     def tearDown( self ):
         requiredCalls = self.__singleGroup.requiredCalls()
         if len( requiredCalls ) > 0:
-            raise MockException( ", ".join( requiredCalls ) + " not called" )
+            raise MockException( ", ".join( e.name for e in requiredCalls ) + " not called" )
+
+    def startUnorderedGroup( self ):
+        group = UnorderedExpectationGroup()
+        self.addExpectation( group )
+        self.__expectationGroups.append( group )
+
+    def popGroup( self ):
+        self.__expectationGroups.pop()
 
 class StackPoper:
     def __init__( self, mock ):
