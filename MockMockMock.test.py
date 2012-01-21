@@ -266,16 +266,35 @@ class Ordering( unittest.TestCase ):
 
     def testUnorderedGroup( self ):
         with self.mock.unordered:
-            self.mock.expect.foobar()
-            self.mock.expect.barbaz()
-        self.mock.object.barbaz()
-        self.mock.object.foobar()
+            self.mock.expect.foobar().andReturn( 1 )
+            self.mock.expect.barbaz().andReturn( 2 )
+        self.assertEqual( self.mock.object.barbaz(), 2 )
+        self.assertEqual( self.mock.object.foobar(), 1 )
         self.mock.tearDown()
-        
+
+    def testUnorderedGroupOfSameMethod( self ):
+        with self.mock.unordered:
+            self.mock.expect.foobar( 1 ).andReturn( 11 )
+            self.mock.expect.foobar( 2 ).andReturn( 12 )
+        self.assertEqual( self.mock.object.foobar( 2 ), 12 )
+        self.assertEqual( self.mock.object.foobar( 1 ), 11 )
+        self.mock.tearDown()
+
+    def testUnorderedGroupOfSameMethodAndAnother( self ):
+        with self.mock.unordered:
+            self.mock.expect.foobar( 1 )
+            self.mock.expect.foobar( 2 )
+            self.mock.expect.barbaz()
+        self.mock.object.foobar( 2 )
+        self.mock.object.barbaz()
+        self.mock.object.foobar( 1 )
+        self.mock.tearDown()
+
 # Expect group of calls in any order
 # Expect group of calls in specific order
 # Expect facultative calls
 # Expect repetitions of calls
+# Test groups in groups in groups in...
 
 # Allow other arguments checking than simple constants
 # Maybe mock.expect.foobar.withArguments( 42 ) could be a synonym for mock.expect.foobar( 42 ) and we could add a withArgumentsChecker to handle more complex cases
