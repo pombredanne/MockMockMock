@@ -95,7 +95,7 @@ class Checker:
         else:
             raise MockException( calledName + " called instead of " + expectation.name )
 
-class MockEngine( object ):
+class OrderedExpectationGroup:
     def __init__( self ):
         self.__expectations = []
 
@@ -108,10 +108,32 @@ class MockEngine( object ):
     def removeExpectation( self, expectation ):
         assert( expectation is self.__expectations[ 0 ] )
         self.__expectations = self.__expectations[ 1 : ]
+
+    def requiredCalls( self ):
+        return [ e.name for e in self.__expectations ]
+
+class MockEngine( object ):
+    def __init__( self ):
+        self.__expectationGroups = [ OrderedExpectationGroup() ]
+
+    def addExpectation( self, expectation ):
+        self.__expectationGroups[ -1 ].addExpectation( expectation )
+
+    def getCurrentPossibleExpectations( self ):
+        return self.__singleGroup.getCurrentPossibleExpectations()
+
+    def removeExpectation( self, expectation ):
+        self.__singleGroup.removeExpectation( expectation )
+
+    @property
+    def __singleGroup( self ):
+        assert( len( self.__expectationGroups ) == 1 )
+        return self.__expectationGroups[ 0 ]
             
     def tearDown( self ):
-        if len( self.__expectations ) > 0:
-            raise MockException( self.__expectations[ 0 ].name + " not called" )
+        requiredCalls = self.__singleGroup.requiredCalls()
+        if len( requiredCalls ) > 0:
+            raise MockException( ", ".join( requiredCalls ) + " not called" )
 
 class StackPoper:
     def __init__( self, mock ):
