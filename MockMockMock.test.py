@@ -283,6 +283,7 @@ class Ordering( unittest.TestCase ):
 # Allow positional arguments (*args) to be passed by name (**kwds)
 
 # Check that expected properties do not allow calls and vice versa
+# Check that unordered method calls on the same name with different arguments can happen
 # Check that unordered property and method calls on the same name can happen
 
 # Derive a class from unittest.TestCase that provides a mock factory and auto-tearDowns the created mocks
