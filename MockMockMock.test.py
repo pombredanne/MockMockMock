@@ -13,7 +13,7 @@ class PublicInterface( unittest.TestCase ):
         self.mock = Mock( "MyMock" )
 
     def testMock( self ):
-        self.assertEqual( self.dir( self.mock ), [ "expect", "object", "tearDown" ] )
+        self.assertEqual( self.dir( self.mock ), [ "expect", "object", "ordered", "tearDown", "unordered" ] )
         self.assertFalse( isCallable( self.mock ) )
 
     def testExpect( self ):
@@ -258,6 +258,19 @@ class ArgumentCheckers( unittest.TestCase ):
         with self.assertRaises( MockException ) as cm:
             m.object.foobar( 13 )
         self.assertEqual( cm.exception.message, "m.foobar called with bad arguments" )
+
+class Ordering( unittest.TestCase ):
+    def setUp( self ):
+        unittest.TestCase.setUp( self )
+        self.mock = Mock( "MyMock" )
+
+    def testUnorderedGroup( self ):
+        with self.mock.unordered:
+            self.mock.expect.foobar()
+            self.mock.expect.barbaz()
+        self.mock.object.barbaz()
+        self.mock.object.foobar()
+        self.mock.tearDown()
         
 # Expect group of calls in any order
 # Expect group of calls in specific order
@@ -267,6 +280,7 @@ class ArgumentCheckers( unittest.TestCase ):
 # Allow other arguments checking than simple constants
 # Maybe mock.expect.foobar.withArguments( 42 ) could be a synonym for mock.expect.foobar( 42 ) and we could add a withArgumentsChecker to handle more complex cases
 # Transmit arguments to andExecute's callable (usefull when repeated, or with other arguments checkers): mock.expect.foobar( 12 ).andExecute( lambda n : n + 1 ).repeated( 5 )
+# Allow positional arguments (*args) to be passed by name (**kwds)
 
 # Check that expected properties do not allow calls and vice versa
 # Check that unordered property and method calls on the same name can happen
