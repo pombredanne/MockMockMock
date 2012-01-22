@@ -33,6 +33,9 @@ class Expectation( object ):
     def requiredCalls( self ):
         return [ self ]
 
+    def removeExpectation( self, expectation ):
+        return False
+
 class BasicExpectationProxy:
     def __init__( self, expectation ):
         self.__expectation = expectation
@@ -133,7 +136,9 @@ class OrderedExpectationGroup:
         if expectation is self.__expectations[ 0 ]:
             self.__expectations = self.__expectations[ 1 : ]
         else:
-            self.__expectations[ 0 ].removeExpectation( expectation )
+            if self.__expectations[ 0 ].removeExpectation( expectation ):
+                self.__expectations = self.__expectations[ 1 : ]
+        return len( self.__expectations ) == 0
 
     def requiredCalls( self ):
         required = []
@@ -155,8 +160,14 @@ class UnorderedExpectationGroup:
         return possible
 
     def removeExpectation( self, expectation ):
-        assert( expectation in self.__expectations )
-        self.__expectations.remove( expectation )
+        if expectation in self.__expectations:
+            self.__expectations.remove( expectation )
+        else:
+            for e in self.__expectations:
+                if e.removeExpectation( expectation ):
+                    self.__expectations.remove( e )
+                    break
+        return len( self.__expectations ) == 0
 
     def requiredCalls( self ):
         required = []
@@ -189,6 +200,11 @@ class MockEngine( object ):
 
     def startUnorderedGroup( self ):
         group = UnorderedExpectationGroup()
+        self.addExpectation( group )
+        self.__expectationGroups.append( group )
+
+    def startOrderedGroup( self ):
+        group = OrderedExpectationGroup()
         self.addExpectation( group )
         self.__expectationGroups.append( group )
 

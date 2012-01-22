@@ -324,6 +324,26 @@ class Ordering( unittest.TestCase ):
             self.mock.object.foobar
         self.assertEqual( cm.exception.message, "MyMock.foobar is expected as a property and as a method call in an unordered group" )
 
+class OrderedGroupInUnordered( unittest.TestCase ):
+    def setUp( self ):
+        unittest.TestCase.setUp( self )
+        self.mock = Mock( "MyMock" )
+        with self.mock.unordered:
+            self.mock.expect.u1()
+            with self.mock.ordered:
+                self.mock.expect.u2o1()
+                self.mock.expect.u2o2()
+                self.mock.expect.u2o3()
+            self.mock.expect.u3()
+
+    def testOriginalOrder( self ):
+        self.mock.object.u1()
+        self.mock.object.u2o1()
+        self.mock.object.u2o2()
+        self.mock.object.u2o3()
+        self.mock.object.u3()
+        self.mock.tearDown()
+
 # Expect group of calls in any order
 # Expect group of calls in specific order
 # Expect facultative calls
