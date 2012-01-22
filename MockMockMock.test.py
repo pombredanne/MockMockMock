@@ -306,6 +306,24 @@ class Ordering( unittest.TestCase ):
         self.mock.object.foobar( 1 )
         self.mock.tearDown()
 
+    def testUnorderedGroupOfSameMethodAndProperty( self ):
+        with self.assertRaises( MockException ) as cm:
+            with self.mock.unordered:
+                self.mock.expect.foobar()
+                self.mock.expect.foobar
+            self.mock.object.foobar
+            self.mock.object.foobar()
+        self.assertEqual( cm.exception.message, "MyMock.foobar is expected as a property and as a method call in an unordered group" )
+
+    def testUnorderedGroupOfSamePropertyAndMethod( self ):
+        with self.assertRaises( MockException ) as cm:
+            with self.mock.unordered:
+                self.mock.expect.foobar
+                self.mock.expect.foobar()
+            self.mock.object.foobar()
+            self.mock.object.foobar
+        self.assertEqual( cm.exception.message, "MyMock.foobar is expected as a property and as a method call in an unordered group" )
+
 # Expect group of calls in any order
 # Expect group of calls in specific order
 # Expect facultative calls

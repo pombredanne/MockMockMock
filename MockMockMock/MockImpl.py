@@ -117,9 +117,7 @@ class Checker:
             self.__mock.removeExpectation( expectation )
             return expectation.action()
         else:
-            ### @todo Raise during expectation phase instead of check phase
             raise MockException( calledName + " is expected as a property and as a method call in an unordered group" )
-        
 
 class OrderedExpectationGroup:
     def __init__( self ):
