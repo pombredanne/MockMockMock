@@ -275,9 +275,25 @@ class Ordering( unittest.TestCase ):
     def testUnorderedGroupOfSameMethod( self ):
         with self.mock.unordered:
             self.mock.expect.foobar( 1 ).andReturn( 11 )
+            self.mock.expect.foobar( 1 ).andReturn( 13 )
             self.mock.expect.foobar( 2 ).andReturn( 12 )
+            self.mock.expect.foobar( 1 ).andReturn( 14 )
         self.assertEqual( self.mock.object.foobar( 2 ), 12 )
         self.assertEqual( self.mock.object.foobar( 1 ), 11 )
+        self.assertEqual( self.mock.object.foobar( 1 ), 13 )
+        self.assertEqual( self.mock.object.foobar( 1 ), 14 )
+        self.mock.tearDown()
+
+    def testUnorderedGroupOfSamePropertyAndAnother( self ):
+        with self.mock.unordered:
+            self.mock.expect.foobar.andReturn( 11 )
+            self.mock.expect.barbaz.andReturn( 12 )
+            self.mock.expect.foobar.andReturn( 13 )
+            self.mock.expect.barbaz.andReturn( 14 )
+        self.assertEqual( self.mock.object.barbaz, 12 )
+        self.assertEqual( self.mock.object.foobar, 11 )
+        self.assertEqual( self.mock.object.barbaz, 14 )
+        self.assertEqual( self.mock.object.foobar, 13 )
         self.mock.tearDown()
 
     def testUnorderedGroupOfSameMethodAndAnother( self ):

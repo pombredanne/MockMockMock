@@ -73,14 +73,17 @@ class Expecter:
         return ExpectationProxy( expectation )
 
 class CallChecker:
-    def __init__( self, mock, expectation ):
-        self.__expectation = expectation
+    def __init__( self, mock, expectations ):
+        self.__expectations = expectations
         self.__mock = mock
 
     def __call__( self, *args, **kwds ):
-        if not self.__expectation.callPolicy.checkCall( args, kwds ):
-            raise MockException( self.__expectation.name + " called with bad arguments" )
-        return self.__expectation.action()
+        for expectation in self.__expectations:
+            if expectation.callPolicy.checkCall( args, kwds ):
+                self.__mock.removeExpectation( expectation )
+                return expectation.action()
+        else:
+            raise MockException( self.__expectations[ 0 ].name + " called with bad arguments" )
 
 class Checker:
     def __init__( self, mock ):
@@ -91,15 +94,32 @@ class Checker:
             raise AttributeError()
         calledName = self.__mock.name + "." + name
         expectations = self.__mock.getCurrentPossibleExpectations()
+        
+        goodNamedExpectations = []
+        allGoodNamedExpectationsExpectCall = True
+        allGoodNamedExpectationsExpectNoCall = True
+        
         for expectation in expectations:
             if expectation.name == calledName:
-                self.__mock.removeExpectation( expectation )
+                goodNamedExpectations.append( expectation )
                 if expectation.expectsCall:
-                    return CallChecker( self.__mock, expectation )
+                    allGoodNamedExpectationsExpectNoCall = False
                 else:
-                    return expectation.action()
+                    allGoodNamedExpectationsExpectCall = False
+        
+        if len( goodNamedExpectations ) == 0:
+            raise MockException( calledName + " called instead of " + expectations[ 0 ].name )
+        
+        if allGoodNamedExpectationsExpectCall:
+            return CallChecker( self.__mock, goodNamedExpectations )
+        elif allGoodNamedExpectationsExpectNoCall:
+            expectation = goodNamedExpectations[ 0 ]
+            self.__mock.removeExpectation( expectation )
+            return expectation.action()
         else:
-            raise MockException( calledName + " called instead of " + expectation.name )
+            ### @todo Raise during expectation phase instead of check phase
+            raise MockException( calledName + " is expected as a property and as a method call in an unordered group" )
+        
 
 class OrderedExpectationGroup:
     def __init__( self ):
