@@ -344,6 +344,40 @@ class OrderedGroupInUnordered( unittest.TestCase ):
         self.mock.object.u3()
         self.mock.tearDown()
 
+    def testAllowedReorderings( self ):
+        for ordering in [
+            ### Comments about enumeration of all allowed orderings
+            # 21 called first => 22 and 23 called near 1 and 3
+            #   1 called before 3
+            [ 21, 22, 23, 1, 3 ], [ 21, 22, 1, 23, 3 ], [ 21, 22, 1, 3, 23 ],
+            [ 21, 1, 22, 23, 3 ], [ 21, 1, 22, 3, 23 ], [ 21, 1, 3, 22, 23 ],
+            #   1 called after 3
+            [ 21, 22, 23, 3, 1 ], [ 21, 22, 3, 23, 1 ], [ 21, 22, 3, 1, 23 ],
+            [ 21, 3, 22, 23, 1 ], [ 21, 3, 22, 1, 23 ], [ 21, 3, 1, 22, 23 ],
+            # 21 called second
+            #   1 called before 3 => 22 and 23 called near 3
+            [ 1, 21, 22, 23, 3 ], [ 1, 21, 22, 3, 23 ], [ 1, 21, 3, 22, 23 ],
+            #   1 called after 3 => 22 and 23 called near 1
+            [ 3, 21, 22, 23, 1 ], [ 3, 21, 22, 1, 23 ], [ 3, 21, 1, 22, 23 ],
+            # 21 called third => 22 and 23 called just after 21
+            [ 1, 3, 21, 22, 23 ], [ 3, 1, 21, 22, 23 ]
+        ] :
+            self.setUp()
+            for m in ordering:
+                if m == 1: self.mock.object.u1()
+                if m == 21: self.mock.object.u2o1()
+                if m == 22: self.mock.object.u2o2()
+                if m == 23: self.mock.object.u2o3()
+                if m == 3: self.mock.object.u3()
+            self.mock.tearDown()
+
+    def testForbidenReordering( self ):
+        self.mock.object.u3()
+        self.mock.object.u2o1()
+        with self.assertRaises( MockException ) as cm:
+            self.mock.object.u2o3()
+        self.assertEqual( cm.exception.message, "MyMock.u2o3 called instead of MyMock.u1 or MyMock.u2o2" )
+
 # Expect group of calls in any order
 # Expect group of calls in specific order
 # Expect facultative calls

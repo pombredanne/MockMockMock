@@ -97,11 +97,11 @@ class Checker:
             raise AttributeError()
         calledName = self.__mock.name + "." + name
         expectations = self.__mock.getCurrentPossibleExpectations()
-        
+
         goodNamedExpectations = []
         allGoodNamedExpectationsExpectCall = True
         allGoodNamedExpectationsExpectNoCall = True
-        
+
         for expectation in expectations:
             if expectation.name == calledName:
                 goodNamedExpectations.append( expectation )
@@ -109,10 +109,10 @@ class Checker:
                     allGoodNamedExpectationsExpectNoCall = False
                 else:
                     allGoodNamedExpectationsExpectCall = False
-        
+
         if len( goodNamedExpectations ) == 0:
-            raise MockException( calledName + " called instead of " + expectations[ 0 ].name )
-        
+            raise MockException( calledName + " called instead of " + " or ".join( e.name for e in expectations ) )
+
         if allGoodNamedExpectationsExpectCall:
             return CallChecker( self.__mock, goodNamedExpectations )
         elif allGoodNamedExpectationsExpectNoCall:
