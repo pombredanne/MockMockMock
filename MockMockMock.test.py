@@ -1,6 +1,7 @@
 import unittest
 from operator import isCallable # deprecated, but documented alternative requires __mro__ to be defined in callable class
 
+import MockMockMock
 from MockMockMock import Mock, MockException
 import MockMockMock.ArgumentCheckers as Checkers
 
@@ -11,6 +12,10 @@ class PublicInterface( unittest.TestCase ):
     def setUp( self ):
         unittest.TestCase.setUp( self )
         self.mock = Mock( "MyMock" )
+
+    def testMockMockMock( self ):
+        ### @todo Remove MockImpl from MockMockMock's public interface
+        self.assertEqual( self.dir( MockMockMock ), [ "ArgumentCheckers", "Mock", "MockException", "MockImpl" ] )
 
     def testMock( self ):
         self.assertEqual( self.dir( self.mock ), [ "expect", "object", "ordered", "tearDown", "unordered" ] )
