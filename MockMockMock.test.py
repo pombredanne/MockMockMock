@@ -77,6 +77,7 @@ class SingleExpectation( unittest.TestCase ):
     def testMethodCallWithReturn( self ):
         returnValue = object()
         self.mock.expect.foobar().andReturn( returnValue )
+        # Not only "==" but "is"
         self.assertTrue( self.mock.object.foobar() is returnValue )
 
     def testPropertyWithReturn( self ):
@@ -159,7 +160,7 @@ class ExpectationSequence( unittest.TestCase ):
     def testCallNotExpectedFirst( self ):
         self.mock.expect.foobar()
         self.mock.expect.barbaz()
-        with self.assertRaises( MockException):
+        with self.assertRaises( MockException ):
             self.mock.object.barbaz()
 
     def testCallWithArgumentsNotExpectedFirst( self ):
@@ -183,11 +184,6 @@ class ExpectationSequence( unittest.TestCase ):
         self.mock.object.foo_5()
         self.mock.object.foo_6()
         self.mock.tearDown()
-
-    # def testRepeatedCall( self ):
-        # self.mock.expect.foobar( 42 ).andReturn( 53 ).repeated( 3 )
-        # for i in range( 3 ):
-            # self.assertEqual( self.mock.object.foobar( 42 ), 53 )
 
 class SequenceBetweenSeveralLinkedMocks( unittest.TestCase ):
     def setUp( self ):
@@ -231,6 +227,7 @@ class SequenceBetweenSeveralIndependentMocks( unittest.TestCase ):
         self.m1.tearDown()
         self.m2.tearDown()
 
+### @todo Decide if this is good or if it should be forbiden
 class ExpectationAndCallAlternation( unittest.TestCase ):
     def setUp( self ):
         unittest.TestCase.setUp( self )
@@ -320,6 +317,7 @@ class Ordering( unittest.TestCase ):
         self.mock.object.foobar( 1 )
         self.mock.tearDown()
 
+    ### @todo Allow unordered property and method calls on the same name: difficult
     def testUnorderedGroupOfSameMethodAndProperty( self ):
         with self.assertRaises( MockException ) as cm:
             with self.mock.unordered:
@@ -350,15 +348,7 @@ class OrderedGroupInUnordered( unittest.TestCase ):
                 self.mock.expect.u2o3()
             self.mock.expect.u3()
 
-    def testOriginalOrder( self ):
-        self.mock.object.u1()
-        self.mock.object.u2o1()
-        self.mock.object.u2o2()
-        self.mock.object.u2o3()
-        self.mock.object.u3()
-        self.mock.tearDown()
-
-    def testAllowedReorderings( self ):
+    def testAllowedOrders( self ):
         for ordering in [
             ### Comments about enumeration of all allowed orderings
             # 21 called first => 22 and 23 called near 1 and 3
@@ -385,15 +375,13 @@ class OrderedGroupInUnordered( unittest.TestCase ):
                 if m == 3: self.mock.object.u3()
             self.mock.tearDown()
 
-    def testForbidenReordering( self ):
+    def testForbidenOrder( self ):
         self.mock.object.u3()
         self.mock.object.u2o1()
         with self.assertRaises( MockException ) as cm:
             self.mock.object.u2o3()
         self.assertEqual( cm.exception.message, "MyMock.u2o3 called instead of MyMock.u1 or MyMock.u2o2" )
 
-# Expect group of calls in any order
-# Expect group of calls in specific order
 # Expect facultative calls
 # Expect repetitions of calls
 # Test groups in groups in groups in...
@@ -403,9 +391,7 @@ class OrderedGroupInUnordered( unittest.TestCase ):
 # Transmit arguments to andExecute's callable (usefull when repeated, or with other arguments checkers): mock.expect.foobar( 12 ).andExecute( lambda n : n + 1 ).repeated( 5 )
 # Allow positional arguments (*args) to be passed by name (**kwds)
 
-# Check that expected properties do not allow calls and vice versa
-# Check that unordered method calls on the same name with different arguments can happen
-# Check that unordered property and method calls on the same name can happen
+# Check that expected properties do not allow call and that expected method calls require call
 
 # Derive a class from unittest.TestCase that provides a mock factory and auto-tearDowns the created mocks
 
