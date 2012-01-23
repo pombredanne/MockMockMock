@@ -52,6 +52,7 @@ class PublicInterface( unittest.TestCase ):
         self.assertFalse( isCallable( self.mock.expect.foobar.andExecute( lambda : 12 ) ) )
 
     def testObject( self ):
+        ### @todo Maybe expose expected calls in mock.object.__dir__
         self.assertEqual( self.dir( self.mock.object ), [] )
 
     def dir( self, o ):
@@ -61,6 +62,9 @@ class SingleExpectation( unittest.TestCase ):
     def setUp( self ):
         unittest.TestCase.setUp( self )
         self.mock = Mock( "MyMock" )
+
+    def tearDown( self ):
+        self.mock.tearDown()
 
     def testMethodCall( self ):
         self.mock.expect.foobar()
@@ -108,6 +112,11 @@ class SingleExpectation( unittest.TestCase ):
         self.mock.expect.foobar.andExecute( f )
         self.mock.object.foobar
         self.assertTrue( self.check )
+
+class SingleExpectationNotCalled( unittest.TestCase ):
+    def setUp( self ):
+        unittest.TestCase.setUp( self )
+        self.mock = Mock( "MyMock" )
 
     def testMethodCallWithBadArgument( self ):
         self.mock.expect.foobar( 42 )
