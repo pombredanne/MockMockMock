@@ -23,10 +23,6 @@ class Expectation( object ):
         self.callPolicy = PropertyCallPolicy()
         self.action = lambda : None
 
-    @property
-    def expectsCall( self ):
-        return self.callPolicy.expectsCall
-
     def getCurrentPossibleExpectations( self ):
         return [ self ]
 
@@ -105,7 +101,7 @@ class Checker:
         for expectation in expectations:
             if expectation.name == calledName:
                 goodNamedExpectations.append( expectation )
-                if expectation.expectsCall:
+                if expectation.callPolicy.expectsCall:
                     allGoodNamedExpectationsExpectNoCall = False
                 else:
                     allGoodNamedExpectationsExpectCall = False
@@ -130,7 +126,12 @@ class OrderedExpectationGroup:
         self.__expectations.append( expectation )
 
     def getCurrentPossibleExpectations( self ):
-        return self.__expectations[ 0 ].getCurrentPossibleExpectations()
+        possible = []
+        for expectation in self.__expectations:
+            possible += expectation.getCurrentPossibleExpectations()
+            if len( expectation.requiredCalls() ) > 0:
+                break
+        return possible
 
     def removeExpectation( self, expectation ):
         if expectation is self.__expectations[ 0 ]:
@@ -175,6 +176,27 @@ class UnorderedExpectationGroup:
             required += expectation.requiredCalls()
         return required
 
+class FacultativeExpectationGroup:
+    def __init__( self ):
+        self.__expectations = []
+
+    def addExpectation( self, expectation ):
+        self.__expectations.append( expectation )
+
+    def getCurrentPossibleExpectations( self ):
+        return self.__expectations[ 0 ].getCurrentPossibleExpectations()
+
+    def removeExpectation( self, expectation ):
+        if expectation is self.__expectations[ 0 ]:
+            self.__expectations = self.__expectations[ 1 : ]
+        else:
+            if self.__expectations[ 0 ].removeExpectation( expectation ):
+                self.__expectations = self.__expectations[ 1 : ]
+        return len( self.__expectations ) == 0
+
+    def requiredCalls( self ):
+        return []
+
 class MockEngine( object ):
     def __init__( self ):
         self.__expectationGroups = [ OrderedExpectationGroup() ]
@@ -205,6 +227,11 @@ class MockEngine( object ):
 
     def startOrderedGroup( self ):
         group = OrderedExpectationGroup()
+        self.addExpectation( group )
+        self.__expectationGroups.append( group )
+
+    def startFacultativeGroup( self ):
+        group = FacultativeExpectationGroup()
         self.addExpectation( group )
         self.__expectationGroups.append( group )
 
@@ -250,6 +277,10 @@ class MockImpl( object ):
 
     def ordered( self ):
         self.__engine.startOrderedGroup()
+        return StackPoper( self )
+
+    def facultative( self ):
+        self.__engine.startFacultativeGroup()
         return StackPoper( self )
 
     def popExpectationStack( self ):

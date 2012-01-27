@@ -23,5 +23,9 @@ class Mock( object ):
     def ordered( self ):
         return self.__impl.ordered()
 
+    @property
+    def facultative( self ):
+        return self.__impl.facultative()
+
     def tearDown( self ):
         return self.__impl.tearDown()

@@ -18,7 +18,7 @@ class PublicInterface( unittest.TestCase ):
         self.assertEqual( self.dir( MockMockMock ), [ "ArgumentCheckers", "Mock", "MockException", "MockImpl" ] )
 
     def testMock( self ):
-        self.assertEqual( self.dir( self.mock ), [ "expect", "object", "ordered", "tearDown", "unordered" ] )
+        self.assertEqual( self.dir( self.mock ), [ "expect", "facultative", "object", "ordered", "tearDown", "unordered" ] )
         self.assertFalse( isCallable( self.mock ) )
 
     def testExpect( self ):
@@ -283,6 +283,16 @@ class Ordering( unittest.TestCase ):
         self.assertEqual( self.mock.object.foobar(), 1 )
         self.mock.tearDown()
 
+    def testFacultativeGroup( self ):
+        self.mock.expect.foobar( 1 ).andReturn( 1 )
+        with self.mock.facultative:
+            self.mock.expect.foobar( 2 ).andReturn( 2 )
+            self.mock.expect.foobar( 3 ).andReturn( 3 )
+        self.mock.expect.foobar( 4 ).andReturn( 4 )
+        self.assertEqual( self.mock.object.foobar( 1 ), 1 )
+        self.assertEqual( self.mock.object.foobar( 4 ), 4 )
+        self.mock.tearDown()
+
     def testUnorderedGroupOfSameMethod( self ):
         with self.mock.unordered:
             self.mock.expect.foobar( 1 ).andReturn( 11 )
@@ -394,5 +404,7 @@ class OrderedGroupInUnordered( unittest.TestCase ):
 # Check that expected properties do not allow call and that expected method calls require call
 
 # Derive a class from unittest.TestCase that provides a mock factory and auto-tearDowns the created mocks
+
+# Be thread safe
 
 unittest.main()
