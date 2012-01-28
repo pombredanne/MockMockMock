@@ -1,4 +1,4 @@
-import ArgumentCheckers
+import ArgumentChecking
 
 class PropertyCallPolicy( object ):
     @property
@@ -56,7 +56,7 @@ class ExpectationProxy( BasicExpectationProxy ):
         self.__expectation = expectation
 
     def __call__( self, *args, **kwds ):
-        return self.withArguments( ArgumentCheckers.Equality( args, kwds ) )
+        return self.withArguments( ArgumentChecking.Equality( args, kwds ) )
 
     def withArguments( self, checker ):
         self.__expectation.callPolicy = MethodCallPolicy( checker )

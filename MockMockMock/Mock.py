@@ -10,11 +10,11 @@ from ExpectationGrouping import (
 
 class Mock( object ):
     def __init__( self, name, brotherMock = None ):
+        self.__name = name
         if brotherMock is None:
             self.__engine = MockEngine( OrderedExpectationGroup() )
         else:
             self.__engine = brotherMock.__engine
-        self.__name = name
 
     @property
     def expect( self ):

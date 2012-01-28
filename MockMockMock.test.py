@@ -3,7 +3,7 @@ from operator import isCallable # deprecated, but documented alternative require
 
 import MockMockMock
 from MockMockMock import Mock, MockException
-import MockMockMock.ArgumentCheckers as Checkers
+import MockMockMock.ArgumentChecking as Checkers
 
 class TestException( Exception ):
     pass
@@ -15,7 +15,7 @@ class PublicInterface( unittest.TestCase ):
 
     def testMockMockMock( self ):
         self.assertEqual( self.dir( MockMockMock ), [
-            "ArgumentCheckers",
+            "ArgumentChecking",
             "ExpectationGrouping", ### @todo Remove
             "Mock",
             "MockEngine", ### @todo Remove
