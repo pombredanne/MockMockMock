@@ -1,43 +1,45 @@
 import MockImpl
+from ExpectationGrouping import *
 
 class Mock( object ):
     def __init__( self, name, brotherMock = None ):
         if brotherMock is None:
-            self.__impl = MockImpl.MockImpl( name, None )
+            self.__engine = MockImpl.MockEngine( OrderedExpectationGroup() )
         else:
-            self.__impl = MockImpl.MockImpl( name, brotherMock.__impl )
+            self.__engine = brotherMock.__engine
+        self.__name = name
 
     @property
     def expect( self ):
-        return self.__impl.expect()
+        return self.__engine.expect( self.__name )
 
     @property
     def object( self ):
-        return self.__impl.object()
+        return self.__engine.object( self.__name )
 
     @property
     def unordered( self ):
-        return self.__impl.unordered()
+        return self.__engine.pushGroup( UnorderedExpectationGroup() )
 
     @property
     def ordered( self ):
-        return self.__impl.ordered()
+        return self.__engine.pushGroup( OrderedExpectationGroup() )
 
     @property
     def atomic( self ):
-        return self.__impl.atomic()
+        return self.__engine.pushGroup( AtomicExpectationGroup() )
 
     @property
     def optional( self ):
-        return self.__impl.optional()
+        return self.__engine.pushGroup( OptionalExpectationGroup() )
 
     @property
     def alternative( self ):
-        return self.__impl.alternative()
+        return self.__engine.pushGroup( AlternativeExpectationGroup() )
 
     @property
     def repeated( self ):
-        return self.__impl.repeated()
+        return self.__engine.pushGroup( RepeatedExpectationGroup() )
 
     def tearDown( self ):
-        return self.__impl.tearDown()
+        self.__engine.tearDown()
