@@ -71,6 +71,7 @@ UnorderedGroup = makeTestCase(
         # Completed in any order
         "aubucudu",
         "buauducu",
+        "bucuaudu",
     ],
     [
         # Not completed
@@ -78,6 +79,8 @@ UnorderedGroup = makeTestCase(
         "aubu",
         "au",
         "",
+        # Bad argument
+        "auxx" ,
     ]
 )
 
@@ -95,6 +98,20 @@ OrderedGroup = makeTestCase(
         "",
         # Wrong order
         "boaodoco",
+    ]
+)
+
+OrderedInUnorderedGroup = makeTestCase(
+    "uo",
+    [
+        # Original order
+        "aubuaobocodocudu",
+        # Other possible orders
+        "aobocodoaubucudu",
+        "aoaubobucocudodu",
+    ],
+    [
+        "aububoaocodocudu",
     ]
 )
 
