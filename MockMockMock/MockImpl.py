@@ -22,10 +22,9 @@ class CallChecker:
     def __call__( self, *args, **kwds ):
         for expectation in self.__expectations:
             if expectation.callPolicy.checkCall( args, kwds ):
-                self.__mock.removeExpectation( expectation )
+                self.__mock.markExpectationCalled( expectation )
                 return expectation.action()
-        else:
-            raise MockException( self.__expectations[ 0 ].name + " called with bad arguments" )
+        raise MockException( self.__expectations[ 0 ].name + " called with bad arguments" )
 
 class Checker:
     def __init__( self, mock ):
@@ -56,7 +55,7 @@ class Checker:
             return CallChecker( self.__mock, goodNamedExpectations )
         elif allGoodNamedExpectationsExpectNoCall:
             expectation = goodNamedExpectations[ 0 ]
-            self.__mock.removeExpectation( expectation )
+            self.__mock.markExpectationCalled( expectation )
             return expectation.action()
         else:
             raise MockException( calledName + " is expected as a property and as a method call in an unordered group" )
@@ -81,8 +80,8 @@ class MockEngine( object ):
     def getCurrentPossibleExpectations( self ):
         return self.__singleGroup.getCurrentPossibleExpectations()
 
-    def removeExpectation( self, expectation ):
-        self.__singleGroup.removeExpectation( expectation )
+    def markExpectationCalled( self, expectation ):
+        self.__singleGroup.markExpectationCalled( expectation )
 
     @property
     def __singleGroup( self ):
@@ -90,9 +89,9 @@ class MockEngine( object ):
         return self.__expectationGroups[ 0 ]
 
     def tearDown( self ):
-        requiredCalls = self.__singleGroup.requiredCalls()
-        if len( requiredCalls ) > 0:
-            raise MockException( ", ".join( e.name for e in requiredCalls ) + " not called" )
+        requiredCalls = self.__singleGroup.nbRequiredCalls()
+        if requiredCalls:
+            raise MockException( ", ".join( self.__singleGroup.getRequiredCallsExamples() ) + " not called" )
 
     def pushGroup( self, group ):
         self.addExpectation( group )
@@ -116,8 +115,8 @@ class MockImpl( object ):
     def getCurrentPossibleExpectations( self ):
         return self.__engine.getCurrentPossibleExpectations()
 
-    def removeExpectation( self, expectation ):
-        self.__engine.removeExpectation( expectation )
+    def markExpectationCalled( self, expectation ):
+        self.__engine.markExpectationCalled( expectation )
 
     def expect( self ):
         return Expecter( self )
@@ -132,7 +131,16 @@ class MockImpl( object ):
         return self.__engine.pushGroup( OrderedExpectationGroup() )
 
     def atomic( self ):
-        return self.__engine.pushGroup( OrderedExpectationGroup() )
+        return self.__engine.pushGroup( AtomicExpectationGroup() )
+
+    def optional( self ):
+        return self.__engine.pushGroup( OptionalExpectationGroup() )
+
+    def alternative( self ):
+        return self.__engine.pushGroup( AlternativeExpectationGroup() )
+
+    def repeated( self ):
+        return self.__engine.pushGroup( RepeatedExpectationGroup() )
 
     def tearDown( self ):
         self.__engine.tearDown()

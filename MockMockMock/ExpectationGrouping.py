@@ -3,7 +3,7 @@ class OrderedOrderingPolicy:
         possible = []
         for expectation in expectations:
             possible += expectation.getCurrentPossibleExpectations()
-            if len( expectation.requiredCalls() ) > 0:
+            if expectation.nbRequiredCalls() > 0:
                 break
         return possible
 
@@ -15,13 +15,20 @@ class UnorderedOrderingPolicy:
         return possible
 
 class AllCompletionPolicy:
-    def requiredCalls( self, expectations ):
-        required = []
+    def nbRequiredCalls( self, expectations ):
+        required = 0
         for expectation in expectations:
-            required += expectation.requiredCalls()
+            required += expectation.nbRequiredCalls()
         return required
 
+AnyCompletionPolicy = AllCompletionPolicy
+ExactlyOneCompletionPolicy = AllCompletionPolicy
+RepeatedCompletionPolicy = AllCompletionPolicy
+
 class UnstickyStickynessPolicy:
+    pass
+
+class StickyStickynessPolicy:
     pass
 
 class ExpectationGroup:
@@ -37,18 +44,21 @@ class ExpectationGroup:
     def getCurrentPossibleExpectations( self ):
         return self.__ordering.getCurrentPossibleExpectations( self.__expectations )
 
-    def removeExpectation( self, expectation ):
+    def markExpectationCalled( self, expectation ):
         if expectation in self.__expectations:
             self.__expectations.remove( expectation )
         else:
             for e in self.__expectations:
-                if e.removeExpectation( expectation ):
+                if e.markExpectationCalled( expectation ):
                     self.__expectations.remove( e )
                     break
         return len( self.__expectations ) == 0
 
-    def requiredCalls( self ):
-        return self.__completion.requiredCalls( self.__expectations )
+    def nbRequiredCalls( self ):
+        return self.__completion.nbRequiredCalls( self.__expectations )
+
+    def getRequiredCallsExamples( self ):
+        return [ "MyMock.foobar" ]
 
 def makeGroup( ordering, completion, stickyness ):
     class Group( ExpectationGroup ):
@@ -59,3 +69,7 @@ def makeGroup( ordering, completion, stickyness ):
 
 OrderedExpectationGroup = makeGroup( OrderedOrderingPolicy, AllCompletionPolicy, UnstickyStickynessPolicy )
 UnorderedExpectationGroup = makeGroup( UnorderedOrderingPolicy, AllCompletionPolicy, UnstickyStickynessPolicy )
+AtomicExpectationGroup = makeGroup( OrderedOrderingPolicy, AllCompletionPolicy, StickyStickynessPolicy )
+OptionalExpectationGroup = makeGroup( OrderedOrderingPolicy, AnyCompletionPolicy, UnstickyStickynessPolicy )
+AlternativeExpectationGroup = makeGroup( UnorderedOrderingPolicy, ExactlyOneCompletionPolicy, UnstickyStickynessPolicy )
+RepeatedExpectationGroup = makeGroup( OrderedOrderingPolicy, RepeatedCompletionPolicy, UnstickyStickynessPolicy )

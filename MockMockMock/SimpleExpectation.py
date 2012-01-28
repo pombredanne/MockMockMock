@@ -28,7 +28,11 @@ class Expectation( object ):
     def requiredCalls( self ):
         return [ self ]
 
-    def removeExpectation( self, expectation ):
+    def nbRequiredCalls( self ):
+        return 1
+
+    def markExpectationCalled( self, expectation ):
+        assert( self is not expectation )
         return False
 
 class BasicExpectationProxy:
