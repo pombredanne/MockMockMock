@@ -137,7 +137,15 @@ class SingleExpectationNotCalled( unittest.TestCase ):
             self.mock.object.barbaz
         self.assertEqual( cm.exception.message, "MyMock.barbaz called instead of MyMock.foobar" )
 
-    def testTearDown( self ):
+    def testMethodNotCalled( self ):
+        self.mock.expect.foobar()
+        with self.assertRaises( MockException ) as cm:
+            self.mock.tearDown()
+        self.assertEqual( cm.exception.message, "MyMock.foobar not called" )
+        self.mock.object.foobar()
+        self.mock.tearDown()
+
+    def testPropertyNotCalled( self ):
         self.mock.expect.foobar
         with self.assertRaises( MockException ) as cm:
             self.mock.tearDown()
@@ -160,8 +168,9 @@ class ExpectationSequence( unittest.TestCase ):
     def testCallNotExpectedFirst( self ):
         self.mock.expect.foobar()
         self.mock.expect.barbaz()
-        with self.assertRaises( MockException ):
+        with self.assertRaises( MockException ) as cm:
             self.mock.object.barbaz()
+        self.assertEqual( cm.exception.message, "MyMock.barbaz called instead of MyMock.foobar" )
 
     def testCallWithArgumentsNotExpectedFirst( self ):
         self.mock.expect.foobar( 42 )
@@ -171,18 +180,18 @@ class ExpectationSequence( unittest.TestCase ):
         self.assertEqual( cm.exception.message, "MyMock.foobar called with bad arguments" )
 
     def testManyCalls( self ):
-        self.mock.expect.foo_1()
-        self.mock.expect.foo_2()
-        self.mock.expect.foo_3()
-        self.mock.expect.foo_4()
-        self.mock.expect.foo_5()
-        self.mock.expect.foo_6()
-        self.mock.object.foo_1()
-        self.mock.object.foo_2()
-        self.mock.object.foo_3()
-        self.mock.object.foo_4()
-        self.mock.object.foo_5()
-        self.mock.object.foo_6()
+        self.mock.expect.foobar( 1 )
+        self.mock.expect.foobar( 2 )
+        self.mock.expect.foobar( 3 )
+        self.mock.expect.foobar( 4 )
+        self.mock.expect.foobar( 5 )
+        self.mock.expect.foobar( 6 )
+        self.mock.object.foobar( 1 )
+        self.mock.object.foobar( 2 )
+        self.mock.object.foobar( 3 )
+        self.mock.object.foobar( 4 )
+        self.mock.object.foobar( 5 )
+        self.mock.object.foobar( 6 )
         self.mock.tearDown()
 
 class SequenceBetweenSeveralLinkedMocks( unittest.TestCase ):
@@ -190,20 +199,20 @@ class SequenceBetweenSeveralLinkedMocks( unittest.TestCase ):
         unittest.TestCase.setUp( self )
         self.m1 = Mock( "m1" )
         self.m2 = Mock( "m2", self.m1 )
-        self.m3 = Mock( "m3", self.m1 )
 
     def testShortCorrectSequence( self ):
         self.m1.expect.foobar( 42 )
-        self.m2.expect.barbaz( 43 )
+        self.m2.expect.foobar( 43 )
         self.m1.object.foobar( 42 )
-        self.m2.object.barbaz( 43 )
+        self.m2.object.foobar( 43 )
         self.m1.tearDown()
 
     def testShortInvertedSequence( self ):
         self.m1.expect.foobar( 42 )
-        self.m2.expect.barbaz( 43 )
+        self.m2.expect.foobar( 43 )
         with self.assertRaises( MockException ) as cm:
-            self.m2.object.barbaz( 43 )
+            self.m2.object.foobar( 43 )
+        self.assertEqual( cm.exception.message, "m2.foobar called instead of m1.foobar" )
 
 class SequenceBetweenSeveralIndependentMocks( unittest.TestCase ):
     def setUp( self ):
@@ -213,48 +222,21 @@ class SequenceBetweenSeveralIndependentMocks( unittest.TestCase ):
 
     def testSameOrderSequence( self ):
         self.m1.expect.foobar( 42 )
-        self.m2.expect.barbaz( 43 )
+        self.m2.expect.foobar( 43 )
         self.m1.object.foobar( 42 )
-        self.m2.object.barbaz( 43 )
+        self.m2.object.foobar( 43 )
         self.m1.tearDown()
         self.m2.tearDown()
 
     def testOtherOrderSequence( self ):
         self.m1.expect.foobar( 42 )
-        self.m2.expect.barbaz( 43 )
-        self.m2.object.barbaz( 43 )
+        self.m2.expect.foobar( 43 )
+        self.m2.object.foobar( 43 )
         self.m1.object.foobar( 42 )
         self.m1.tearDown()
         self.m2.tearDown()
 
-### @todo Decide if this is good or if it should be forbiden
-class ExpectationAndCallAlternation( unittest.TestCase ):
-    def setUp( self ):
-        unittest.TestCase.setUp( self )
-        self.mock = Mock( "MyMock" )
-
-    def test( self ):
-        self.mock.expect.foobar( 42 )
-        self.mock.expect.foobar( 43 )
-        self.mock.object.foobar( 42 )
-        self.mock.expect.foobar( 44 )
-        self.mock.object.foobar( 43 )
-        self.mock.object.foobar( 44 )
-        self.mock.tearDown()
-
 class ArgumentCheckers( unittest.TestCase ):
-    # def testIdentityChecker( self ):
-
-    def testEqualityChecker( self ):
-        c = Checkers.Equality( ( 1, 2, 3 ), { 1: 1, 2: 2, 3: 3 } )
-        self.assertTrue( c( ( 1, 2, 3 ), { 1: 1, 2: 2, 3: 3 } ) )
-        self.assertFalse( c( ( 1, 2, 3 ), { 1: 1, 2: 2, 3: 4 } ) )
-        self.assertFalse( c( ( 1, 2, 4 ), { 1: 1, 2: 2, 3: 3 } ) )
-    
-    # def testTypeChecker( self ):
-    
-    # def testRangeChecker( self ):
-
     def testCheckerIsUsedByCall( self ):
         # We use a mock...
         checker = Mock( "checker" )
@@ -270,141 +252,14 @@ class ArgumentCheckers( unittest.TestCase ):
             m.object.foobar( 13 )
         self.assertEqual( cm.exception.message, "m.foobar called with bad arguments" )
 
-class Ordering( unittest.TestCase ):
-    def setUp( self ):
-        unittest.TestCase.setUp( self )
-        self.mock = Mock( "MyMock" )
+    # def testIdentityChecker( self ):
+    # def testTypeChecker( self ):
+    # def testRangeChecker( self ):
 
-    def testUnorderedGroup( self ):
-        with self.mock.unordered:
-            self.mock.expect.foobar().andReturn( 1 )
-            self.mock.expect.barbaz().andReturn( 2 )
-        self.assertEqual( self.mock.object.barbaz(), 2 )
-        self.assertEqual( self.mock.object.foobar(), 1 )
-        self.mock.tearDown()
-
-    def testFacultativeGroup( self ):
-        self.mock.expect.foobar( 1 ).andReturn( 1 )
-        with self.mock.facultative:
-            self.mock.expect.foobar( 2 ).andReturn( 2 )
-            self.mock.expect.foobar( 3 ).andReturn( 3 )
-        self.mock.expect.foobar( 4 ).andReturn( 4 )
-        self.assertEqual( self.mock.object.foobar( 1 ), 1 )
-        self.assertEqual( self.mock.object.foobar( 4 ), 4 )
-        self.mock.tearDown()
-
-    def testUnorderedGroupOfSameMethod( self ):
-        with self.mock.unordered:
-            self.mock.expect.foobar( 1 ).andReturn( 11 )
-            self.mock.expect.foobar( 1 ).andReturn( 13 )
-            self.mock.expect.foobar( 2 ).andReturn( 12 )
-            self.mock.expect.foobar( 1 ).andReturn( 14 )
-        self.assertEqual( self.mock.object.foobar( 2 ), 12 )
-        self.assertEqual( self.mock.object.foobar( 1 ), 11 )
-        self.assertEqual( self.mock.object.foobar( 1 ), 13 )
-        self.assertEqual( self.mock.object.foobar( 1 ), 14 )
-        self.mock.tearDown()
-
-    def testUnorderedGroupOfSamePropertyAndAnother( self ):
-        with self.mock.unordered:
-            self.mock.expect.foobar.andReturn( 11 )
-            self.mock.expect.barbaz.andReturn( 12 )
-            self.mock.expect.foobar.andReturn( 13 )
-            self.mock.expect.barbaz.andReturn( 14 )
-        self.assertEqual( self.mock.object.barbaz, 12 )
-        self.assertEqual( self.mock.object.foobar, 11 )
-        self.assertEqual( self.mock.object.barbaz, 14 )
-        self.assertEqual( self.mock.object.foobar, 13 )
-        self.mock.tearDown()
-
-    def testUnorderedGroupOfSameMethodAndAnother( self ):
-        with self.mock.unordered:
-            self.mock.expect.foobar( 1 )
-            self.mock.expect.foobar( 2 )
-            self.mock.expect.barbaz()
-        self.mock.object.foobar( 2 )
-        self.mock.object.barbaz()
-        self.mock.object.foobar( 1 )
-        self.mock.tearDown()
-
-    ### @todo Allow unordered property and method calls on the same name: difficult
-    def testUnorderedGroupOfSameMethodAndProperty( self ):
-        with self.assertRaises( MockException ) as cm:
-            with self.mock.unordered:
-                self.mock.expect.foobar()
-                self.mock.expect.foobar
-            self.mock.object.foobar
-            self.mock.object.foobar()
-        self.assertEqual( cm.exception.message, "MyMock.foobar is expected as a property and as a method call in an unordered group" )
-
-    def testUnorderedGroupOfSamePropertyAndMethod( self ):
-        with self.assertRaises( MockException ) as cm:
-            with self.mock.unordered:
-                self.mock.expect.foobar
-                self.mock.expect.foobar()
-            self.mock.object.foobar()
-            self.mock.object.foobar
-        self.assertEqual( cm.exception.message, "MyMock.foobar is expected as a property and as a method call in an unordered group" )
-
-class OrderedGroupInUnordered( unittest.TestCase ):
-    def setUp( self ):
-        unittest.TestCase.setUp( self )
-        self.mock = Mock( "MyMock" )
-        with self.mock.unordered:
-            self.mock.expect.u1()
-            with self.mock.ordered:
-                self.mock.expect.u2o1()
-                self.mock.expect.u2o2()
-                self.mock.expect.u2o3()
-            self.mock.expect.u3()
-
-    def testAllowedOrders( self ):
-        for ordering in [
-            ### Comments about enumeration of all allowed orderings
-            # 21 called first => 22 and 23 called near 1 and 3
-            #   1 called before 3
-            [ 21, 22, 23, 1, 3 ], [ 21, 22, 1, 23, 3 ], [ 21, 22, 1, 3, 23 ],
-            [ 21, 1, 22, 23, 3 ], [ 21, 1, 22, 3, 23 ], [ 21, 1, 3, 22, 23 ],
-            #   1 called after 3
-            [ 21, 22, 23, 3, 1 ], [ 21, 22, 3, 23, 1 ], [ 21, 22, 3, 1, 23 ],
-            [ 21, 3, 22, 23, 1 ], [ 21, 3, 22, 1, 23 ], [ 21, 3, 1, 22, 23 ],
-            # 21 called second
-            #   1 called before 3 => 22 and 23 called near 3
-            [ 1, 21, 22, 23, 3 ], [ 1, 21, 22, 3, 23 ], [ 1, 21, 3, 22, 23 ],
-            #   1 called after 3 => 22 and 23 called near 1
-            [ 3, 21, 22, 23, 1 ], [ 3, 21, 22, 1, 23 ], [ 3, 21, 1, 22, 23 ],
-            # 21 called third => 22 and 23 called just after 21
-            [ 1, 3, 21, 22, 23 ], [ 3, 1, 21, 22, 23 ]
-        ] :
-            self.setUp()
-            for m in ordering:
-                if m == 1: self.mock.object.u1()
-                if m == 21: self.mock.object.u2o1()
-                if m == 22: self.mock.object.u2o2()
-                if m == 23: self.mock.object.u2o3()
-                if m == 3: self.mock.object.u3()
-            self.mock.tearDown()
-
-    def testForbidenOrder( self ):
-        self.mock.object.u3()
-        self.mock.object.u2o1()
-        with self.assertRaises( MockException ) as cm:
-            self.mock.object.u2o3()
-        self.assertEqual( cm.exception.message, "MyMock.u2o3 called instead of MyMock.u1 or MyMock.u2o2" )
-
-# Expect facultative calls
-# Expect repetitions of calls
-# Test groups in groups in groups in...
-
-# Allow other arguments checking than simple constants
-# Maybe mock.expect.foobar.withArguments( 42 ) could be a synonym for mock.expect.foobar( 42 ) and we could add a withArgumentsChecker to handle more complex cases
-# Transmit arguments to andExecute's callable (usefull when repeated, or with other arguments checkers): mock.expect.foobar( 12 ).andExecute( lambda n : n + 1 ).repeated( 5 )
-# Allow positional arguments (*args) to be passed by name (**kwds)
-
-# Check that expected properties do not allow call and that expected method calls require call
-
-# Derive a class from unittest.TestCase that provides a mock factory and auto-tearDowns the created mocks
-
-# Be thread safe
+    def testEqualityChecker( self ):
+        c = Checkers.Equality( ( 1, 2, 3 ), { 1: 1, 2: 2, 3: 3 } )
+        self.assertTrue( c( ( 1, 2, 3 ), { 1: 1, 2: 2, 3: 3 } ) )
+        self.assertFalse( c( ( 1, 2, 3 ), { 1: 1, 2: 2, 3: 4 } ) )
+        self.assertFalse( c( ( 1, 2, 4 ), { 1: 1, 2: 2, 3: 3 } ) )
 
 unittest.main()

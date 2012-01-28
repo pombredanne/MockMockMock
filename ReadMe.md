@@ -7,6 +7,21 @@ A1, B1, A2, B2 donc un unordered composé de 2 ordered ne convient pas. Donc il f
 et faire un unordered contenant deux atomic.
 
 ----------------------------------------------------------
+# Expect facultative calls
+# Expect repetitions of calls
+# Test groups in groups in groups in...
+
+# Allow other arguments checking than simple constants
+# Maybe mock.expect.foobar.withArguments( 42 ) could be a synonym for mock.expect.foobar( 42 ) and we could add a withArgumentsChecker to handle more complex cases
+# Transmit arguments to andExecute's callable (usefull when repeated, or with other arguments checkers): mock.expect.foobar( 12 ).andExecute( lambda n : n + 1 ).repeated( 5 )
+# Allow positional arguments (*args) to be passed by name (**kwds)
+
+# Check that expected properties do not allow call and that expected method calls require call
+
+# Derive a class from unittest.TestCase that provides a mock factory and auto-tearDowns the created mocks
+
+# Be thread safe
+----------------------------------------------------------
 
 Policies defining a Group:
  - ordering: called to know which calls are possible (returns a collection of Expectations)
