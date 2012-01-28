@@ -247,7 +247,7 @@ class StackPoper:
         
     def __exit__( self, a, b, c ):
         self.__mock.popExpectationStack()
-            
+
 class MockImpl( object ):
     def __init__( self, name, brotherMock ):
         if brotherMock is None:
@@ -276,6 +276,10 @@ class MockImpl( object ):
         return StackPoper( self )
 
     def ordered( self ):
+        self.__engine.startOrderedGroup()
+        return StackPoper( self )
+
+    def atomic( self ):
         self.__engine.startOrderedGroup()
         return StackPoper( self )
 

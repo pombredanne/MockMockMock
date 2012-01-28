@@ -18,7 +18,7 @@ class PublicInterface( unittest.TestCase ):
         self.assertEqual( self.dir( MockMockMock ), [ "ArgumentCheckers", "Mock", "MockException", "MockImpl" ] )
 
     def testMock( self ):
-        self.assertEqual( self.dir( self.mock ), [ "expect", "facultative", "object", "ordered", "tearDown", "unordered" ] )
+        self.assertEqual( self.dir( self.mock ), [ "alternative", "atomic", "expect", "object", "optional", "ordered", "repeated", "tearDown", "unordered" ] )
         self.assertFalse( isCallable( self.mock ) )
 
     def testExpect( self ):

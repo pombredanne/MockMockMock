@@ -115,8 +115,27 @@ OrderedInUnorderedGroup = makeTestCase(
         "oaudobucocubodua",
     ],
     [
-        # Ordered group in wroing order
+        # Ordered group in wrong order
         "uauboboaocoducud",
+    ]
+)
+
+AtomicInUnorderedGroup = makeTestCase(
+    "ua",
+    [
+        # Original order
+        "uaubaaabacaducud",
+        # Other possible orders
+        #  atomic group at once
+        "aaabacaduaubucud",
+        "uaubucudaaabacad",
+    ],
+    [
+        # Atomic group in wrong order
+        "uaubabaaacaducud",
+        # Atomic group in pieces
+        "aauaabubacucadud",
+        "aaudabucacubadua",
     ]
 )
 

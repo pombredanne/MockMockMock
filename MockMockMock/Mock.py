@@ -24,8 +24,20 @@ class Mock( object ):
         return self.__impl.ordered()
 
     @property
-    def facultative( self ):
-        return self.__impl.facultative()
+    def atomic( self ):
+        return self.__impl.atomic()
+
+    @property
+    def optional( self ):
+        return self.__impl.optional()
+
+    @property
+    def alternative( self ):
+        return self.__impl.alternative()
+
+    @property
+    def repeated( self ):
+        return self.__impl.repeated()
 
     def tearDown( self ):
         return self.__impl.tearDown()
