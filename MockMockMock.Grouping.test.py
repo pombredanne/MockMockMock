@@ -15,11 +15,11 @@ def makeExpectations( mock, groups ):
     if len( groups ) > 0:
         group = groups[ 0 ]
         with groupMakers[ group ]( mock ):
-            mock.expect.foobar( "a" + group )
-            mock.expect.foobar( "b" + group )
+            mock.expect.foobar( group + "a" )
+            mock.expect.foobar( group + "b" )
             makeExpectations( mock, groups[ 1: ] )
-            mock.expect.foobar( "c" + group )
-            mock.expect.foobar( "d" + group )
+            mock.expect.foobar( group + "c" )
+            mock.expect.foobar( group + "d" )
 
 def makeTestCase( groups, allowedOrders, forbidenOrders ):
     groups = list( groups )
@@ -69,18 +69,18 @@ UnorderedGroup = makeTestCase(
     "u",
     [
         # Completed in any order
-        "aubucudu",
-        "buauducu",
-        "bucuaudu",
+        "uaubucud",
+        "ubuauduc",
+        "ubucuaud",
     ],
     [
         # Not completed
-        "aubucu",
-        "aubu",
-        "au",
+        "uaubuc",
+        "uaub",
+        "ua",
         "",
         # Bad argument
-        "auxx" ,
+        "uaxx" ,
     ]
 )
 
@@ -88,16 +88,16 @@ OrderedGroup = makeTestCase(
     "o",
     [
         # Completed in good order
-        "aobocodo",
+        "oaobocod",
     ],
     [
         # Not completed
-        "aoboco",
-        "aobo",
-        "ao",
+        "oaoboc",
+        "oaob",
+        "oa",
         "",
         # Wrong order
-        "boaodoco",
+        "oboaodoc",
     ]
 )
 
@@ -105,13 +105,18 @@ OrderedInUnorderedGroup = makeTestCase(
     "uo",
     [
         # Original order
-        "aubuaobocodocudu",
+        "uauboaobocoducud",
         # Other possible orders
-        "aobocodoaubucudu",
-        "aoaubobucocudodu",
+        #  ordered group at once
+        "oaobocoduaubucud",
+        "uaubucudoaobocod",
+        #  ordered group in pieces
+        "oauaobubocucodud",
+        "oaudobucocubodua",
     ],
     [
-        "aububoaocodocudu",
+        # Ordered group in wroing order
+        "uauboboaocoducud",
     ]
 )
 
