@@ -1,5 +1,12 @@
 from MockEngine import MockEngine
-from ExpectationGrouping import *
+from ExpectationGrouping import (
+    OrderedExpectationGroup,
+    UnorderedExpectationGroup,
+    AtomicExpectationGroup,
+    OptionalExpectationGroup,
+    AlternativeExpectationGroup,
+    RepeatedExpectationGroup
+)
 
 class Mock( object ):
     def __init__( self, name, brotherMock = None ):
