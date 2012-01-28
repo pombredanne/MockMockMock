@@ -62,6 +62,16 @@ class Checker:
             raise MockException( calledName + " is expected as a property and as a method call in an unordered group" )
 
 class MockEngine( object ):
+    class StackPoper:
+        def __init__( self, engine ):
+            self.__engine = engine
+
+        def __enter__( self ):
+            pass
+
+        def __exit__( self, a, b, c ):
+            self.__engine.popGroup()
+
     def __init__( self ):
         self.__expectationGroups = [ OrderedExpectationGroup() ]
 
@@ -78,39 +88,19 @@ class MockEngine( object ):
     def __singleGroup( self ):
         assert( len( self.__expectationGroups ) == 1 )
         return self.__expectationGroups[ 0 ]
-            
+
     def tearDown( self ):
         requiredCalls = self.__singleGroup.requiredCalls()
         if len( requiredCalls ) > 0:
             raise MockException( ", ".join( e.name for e in requiredCalls ) + " not called" )
 
-    def startUnorderedGroup( self ):
-        group = UnorderedExpectationGroup()
+    def pushGroup( self, group ):
         self.addExpectation( group )
         self.__expectationGroups.append( group )
-
-    def startOrderedGroup( self ):
-        group = OrderedExpectationGroup()
-        self.addExpectation( group )
-        self.__expectationGroups.append( group )
-
-    def startFacultativeGroup( self ):
-        group = FacultativeExpectationGroup()
-        self.addExpectation( group )
-        self.__expectationGroups.append( group )
+        return MockEngine.StackPoper( self )
 
     def popGroup( self ):
         self.__expectationGroups.pop()
-
-class StackPoper:
-    def __init__( self, mock ):
-        self.__mock = mock
-
-    def __enter__( self ):
-        pass
-        
-    def __exit__( self, a, b, c ):
-        self.__mock.popExpectationStack()
 
 class MockImpl( object ):
     def __init__( self, name, brotherMock ):
@@ -136,24 +126,13 @@ class MockImpl( object ):
         return Checker( self )
 
     def unordered( self ):
-        self.__engine.startUnorderedGroup()
-        return StackPoper( self )
+        return self.__engine.pushGroup( UnorderedExpectationGroup() )
 
     def ordered( self ):
-        self.__engine.startOrderedGroup()
-        return StackPoper( self )
+        return self.__engine.pushGroup( OrderedExpectationGroup() )
 
     def atomic( self ):
-        self.__engine.startOrderedGroup()
-        return StackPoper( self )
-
-    def facultative( self ):
-        self.__engine.startFacultativeGroup()
-        return StackPoper( self )
-
-    def popExpectationStack( self ):
-        self.__engine.popGroup()
-        pass
+        return self.__engine.pushGroup( OrderedExpectationGroup() )
 
     def tearDown( self ):
         self.__engine.tearDown()
