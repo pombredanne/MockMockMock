@@ -10,14 +10,6 @@ class Expecter:
         if name == "__dir__": raise AttributeError()
         return self.__engine.addExpectation( self.__mockName + "." + name )
 
-class CallChecker:
-    def __init__( self, engine, expectations ):
-        self.__engine = engine
-        self.__expectations = expectations
-
-    def __call__( self, *args, **kwds ):
-        return self.__engine.checkExpectationCall( self.__expectations, args, kwds )
-
 class Checker:
     def __init__( self, engine, mockName ):
         self.__engine = engine
@@ -27,7 +19,36 @@ class Checker:
         if name == "__dir__": raise AttributeError()
         return self.__engine.checkExpectation( self.__mockName + "." + name )
 
+class CallChecker:
+    def __init__( self, engine, expectations ):
+        self.__engine = engine
+        self.__expectations = expectations
+
+    def __call__( self, *args, **kwds ):
+        return self.__engine.checkExpectationCall( self.__expectations, args, kwds )
+
 class MockEngine( object ):
+    def __init__( self, initialGroup ):
+        self.__expectationGroups = [ initialGroup ]
+
+    # expect
+    def expect( self, mockName ):
+        return Expecter( self, mockName )
+
+    def addExpectation( self, name ):
+        # Note that accepting name == "__call__" allows the mock object to be callable with no specific code
+        expectation = Expectation( name )
+        self.__addExpectation( expectation )
+        return ExpectationProxy( expectation )
+
+    def __addExpectation( self, expectation ):
+        self.__expectationGroups[ -1 ].addExpectation( expectation )
+
+    def pushGroup( self, group ):
+        self.__addExpectation( group )
+        self.__expectationGroups.append( group )
+        return MockEngine.StackPoper( self )
+
     class StackPoper:
         def __init__( self, engine ):
             self.__engine = engine
@@ -38,23 +59,12 @@ class MockEngine( object ):
         def __exit__( self, a, b, c ):
             self.__engine.popGroup()
 
-    def __init__( self, initialGroup ):
-        self.__expectationGroups = [ initialGroup ]
+    def popGroup( self ):
+        self.__expectationGroups.pop()
 
-    def expect( self, mockName ):
-        return Expecter( self, mockName )
-
+    # call
     def object( self, mockName ):
         return Checker( self, mockName )
-
-    def addExpectation( self, name ):
-        # Note that accepting name == "__call__" allows the mock object to be callable with no specific code
-        expectation = Expectation( name )
-        self.__addExpectation( expectation )
-        return ExpectationProxy( expectation )
-
-    def __addExpectation( self, expectation ):
-        self.__expectationGroups[ -1 ].addExpectation( expectation )
 
     def getCurrentPossibleExpectations( self ):
         return self.__singleGroup.getCurrentPossibleExpectations()
@@ -105,11 +115,3 @@ class MockEngine( object ):
         requiredCalls = self.__singleGroup.nbRequiredCalls()
         if requiredCalls:
             raise MockException( ", ".join( self.__singleGroup.getRequiredCallsExamples() ) + " not called" )
-
-    def pushGroup( self, group ):
-        self.__addExpectation( group )
-        self.__expectationGroups.append( group )
-        return MockEngine.StackPoper( self )
-
-    def popGroup( self ):
-        self.__expectationGroups.pop()
