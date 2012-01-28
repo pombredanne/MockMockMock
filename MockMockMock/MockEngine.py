@@ -51,14 +51,9 @@ class MockEngine( object ):
         return MockEngine.StackPoper( self )
 
     class StackPoper:
-        def __init__( self, engine ):
-            self.__engine = engine
-
-        def __enter__( self ):
-            pass
-
-        def __exit__( self, a, b, c ):
-            self.__engine.popGroup()
+        def __init__( self, engine ): self.__engine = engine
+        def __enter__( self ): pass
+        def __exit__( self, *ignored ): self.__engine.popGroup()
 
     def popGroup( self ):
         self.__currentGroup = self.__currentGroup.parent
@@ -67,11 +62,8 @@ class MockEngine( object ):
     def object( self, mockName ):
         return Checker( self, mockName )
 
-    def getCurrentPossibleExpectations( self ):
-        return self.__currentGroup.getCurrentPossibleExpectations()
-
     def checkExpectation( self, calledName ):
-        expectations = self.getCurrentPossibleExpectations()
+        expectations = self.__currentGroup.getCurrentPossibleExpectations()
 
         goodNamedExpectations = []
         allGoodNamedExpectationsExpectCall = True
@@ -92,7 +84,7 @@ class MockEngine( object ):
             return CallChecker( self, goodNamedExpectations )
         elif allGoodNamedExpectationsExpectNoCall:
             expectation = goodNamedExpectations[ 0 ]
-            self.markExpectationCalled( expectation )
+            self.__currentGroup.markExpectationCalled( expectation )
             return expectation.action()
         else:
             raise MockException( calledName + " is expected as a property and as a method call in an unordered group" )
@@ -100,12 +92,9 @@ class MockEngine( object ):
     def checkExpectationCall( self, expectations, args, kwds ):
         for expectation in expectations:
             if expectation.callPolicy.checkCall( args, kwds ):
-                self.markExpectationCalled( expectation )
+                self.__currentGroup.markExpectationCalled( expectation )
                 return expectation.action()
         raise MockException( expectations[ 0 ].name + " called with bad arguments" )
-
-    def markExpectationCalled( self, expectation ):
-        self.__currentGroup.markExpectationCalled( expectation )
 
     def tearDown( self ):
         requiredCalls = self.__currentGroup.nbRequiredCalls()
