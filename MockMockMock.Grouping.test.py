@@ -2,126 +2,100 @@ import unittest
 
 from MockMockMock import Mock, MockException
 
-class Ordering( unittest.TestCase ):
-    def setUp( self ):
-        unittest.TestCase.setUp( self )
-        self.mock = Mock( "MyMock" )
+groupMakers = {
+    "o" : lambda m: m.ordered,
+    "u" : lambda m: m.unordered,
+    "a" : lambda m: m.atomic,
+    "p" : lambda m: m.optional,
+    "l" : lambda m: m.alternative,
+    "r" : lambda m: m.repeated,
+}
 
-    def testUnorderedGroup( self ):
-        with self.mock.unordered:
-            self.mock.expect.foobar().andReturn( 1 )
-            self.mock.expect.barbaz().andReturn( 2 )
-        self.assertEqual( self.mock.object.barbaz(), 2 )
-        self.assertEqual( self.mock.object.foobar(), 1 )
-        self.mock.tearDown()
+def makeExpectations( mock, groups ):
+    if len( groups ) > 0:
+        group = groups[ 0 ]
+        with groupMakers[ group ]( mock ):
+            mock.expect.foobar( "a" + group )
+            mock.expect.foobar( "b" + group )
+            makeExpectations( mock, groups[ 1: ] )
+            mock.expect.foobar( "c" + group )
+            mock.expect.foobar( "d" + group )
 
-    def testFacultativeGroup( self ):
-        self.mock.expect.foobar( 1 ).andReturn( 1 )
-        with self.mock.facultative:
-            self.mock.expect.foobar( 2 ).andReturn( 2 )
-            self.mock.expect.foobar( 3 ).andReturn( 3 )
-        self.mock.expect.foobar( 4 ).andReturn( 4 )
-        self.assertEqual( self.mock.object.foobar( 1 ), 1 )
-        self.assertEqual( self.mock.object.foobar( 4 ), 4 )
-        self.mock.tearDown()
+def makeTestCase( groups, allowedOrders, forbidenOrders ):
+    groups = list( groups )
+    allowedOrders = [
+        [
+            allowedOrder[ 2 * i : 2 * i + 2 ]
+            for i in range( len( allowedOrder ) / 2 )
+        ]
+        for allowedOrder in allowedOrders
+    ]
+    forbidenOrders = [
+        [
+            forbidenOrder[ 2 * i : 2 * i + 2 ]
+            for i in range( len( forbidenOrder ) / 2 )
+        ]
+        for forbidenOrder in forbidenOrders
+    ]
 
-    def testUnorderedGroupOfSameMethod( self ):
-        with self.mock.unordered:
-            self.mock.expect.foobar( 1 ).andReturn( 11 )
-            self.mock.expect.foobar( 1 ).andReturn( 13 )
-            self.mock.expect.foobar( 2 ).andReturn( 12 )
-            self.mock.expect.foobar( 1 ).andReturn( 14 )
-        self.assertEqual( self.mock.object.foobar( 2 ), 12 )
-        self.assertEqual( self.mock.object.foobar( 1 ), 11 )
-        self.assertEqual( self.mock.object.foobar( 1 ), 13 )
-        self.assertEqual( self.mock.object.foobar( 1 ), 14 )
-        self.mock.tearDown()
+    class TestCase( unittest.TestCase ):
+        def setUp( self ):
+            unittest.TestCase.setUp( self )
+            self.mock = Mock( "MyMock" )
+            makeExpectations( self.mock, groups )
 
-    def testUnorderedGroupOfSamePropertyAndAnother( self ):
-        with self.mock.unordered:
-            self.mock.expect.foobar.andReturn( 11 )
-            self.mock.expect.barbaz.andReturn( 12 )
-            self.mock.expect.foobar.andReturn( 13 )
-            self.mock.expect.barbaz.andReturn( 14 )
-        self.assertEqual( self.mock.object.barbaz, 12 )
-        self.assertEqual( self.mock.object.foobar, 11 )
-        self.assertEqual( self.mock.object.barbaz, 14 )
-        self.assertEqual( self.mock.object.foobar, 13 )
-        self.mock.tearDown()
-
-    def testUnorderedGroupOfSameMethodAndAnother( self ):
-        with self.mock.unordered:
-            self.mock.expect.foobar( 1 )
-            self.mock.expect.foobar( 2 )
-            self.mock.expect.barbaz()
-        self.mock.object.foobar( 2 )
-        self.mock.object.barbaz()
-        self.mock.object.foobar( 1 )
-        self.mock.tearDown()
-
-    ### @todo Allow unordered property and method calls on the same name: difficult
-    def testUnorderedGroupOfSameMethodAndProperty( self ):
-        with self.assertRaises( MockException ) as cm:
-            with self.mock.unordered:
-                self.mock.expect.foobar()
-                self.mock.expect.foobar
-            self.mock.object.foobar
-            self.mock.object.foobar()
-        self.assertEqual( cm.exception.message, "MyMock.foobar is expected as a property and as a method call in an unordered group" )
-
-    def testUnorderedGroupOfSamePropertyAndMethod( self ):
-        with self.assertRaises( MockException ) as cm:
-            with self.mock.unordered:
-                self.mock.expect.foobar
-                self.mock.expect.foobar()
-            self.mock.object.foobar()
-            self.mock.object.foobar
-        self.assertEqual( cm.exception.message, "MyMock.foobar is expected as a property and as a method call in an unordered group" )
-
-class OrderedGroupInUnordered( unittest.TestCase ):
-    def setUp( self ):
-        unittest.TestCase.setUp( self )
-        self.mock = Mock( "MyMock" )
-        with self.mock.unordered:
-            self.mock.expect.u1()
-            with self.mock.ordered:
-                self.mock.expect.u2o1()
-                self.mock.expect.u2o2()
-                self.mock.expect.u2o3()
-            self.mock.expect.u3()
-
-    def testAllowedOrders( self ):
-        for ordering in [
-            ### Comments about enumeration of all allowed orderings
-            # 21 called first => 22 and 23 called near 1 and 3
-            #   1 called before 3
-            [ 21, 22, 23, 1, 3 ], [ 21, 22, 1, 23, 3 ], [ 21, 22, 1, 3, 23 ],
-            [ 21, 1, 22, 23, 3 ], [ 21, 1, 22, 3, 23 ], [ 21, 1, 3, 22, 23 ],
-            #   1 called after 3
-            [ 21, 22, 23, 3, 1 ], [ 21, 22, 3, 23, 1 ], [ 21, 22, 3, 1, 23 ],
-            [ 21, 3, 22, 23, 1 ], [ 21, 3, 22, 1, 23 ], [ 21, 3, 1, 22, 23 ],
-            # 21 called second
-            #   1 called before 3 => 22 and 23 called near 3
-            [ 1, 21, 22, 23, 3 ], [ 1, 21, 22, 3, 23 ], [ 1, 21, 3, 22, 23 ],
-            #   1 called after 3 => 22 and 23 called near 1
-            [ 3, 21, 22, 23, 1 ], [ 3, 21, 22, 1, 23 ], [ 3, 21, 1, 22, 23 ],
-            # 21 called third => 22 and 23 called just after 21
-            [ 1, 3, 21, 22, 23 ], [ 3, 1, 21, 22, 23 ]
-        ] :
-            self.setUp()
-            for m in ordering:
-                if m == 1: self.mock.object.u1()
-                if m == 21: self.mock.object.u2o1()
-                if m == 22: self.mock.object.u2o2()
-                if m == 23: self.mock.object.u2o3()
-                if m == 3: self.mock.object.u3()
+    for allowedOrder in allowedOrders:
+        def test( self ):
+            for argument in allowedOrder:
+                self.mock.object.foobar( argument )
             self.mock.tearDown()
 
-    def testForbidenOrder( self ):
-        self.mock.object.u3()
-        self.mock.object.u2o1()
-        with self.assertRaises( MockException ) as cm:
-            self.mock.object.u2o3()
-        self.assertEqual( cm.exception.message, "MyMock.u2o3 called instead of MyMock.u1 or MyMock.u2o2" )
+        setattr( TestCase, "test_" + "".join( allowedOrder ), test )
+
+    for forbidenOrder in forbidenOrders:
+        def test( self ):
+            with self.assertRaises( MockException ):
+                for argument in forbidenOrder:
+                    self.mock.object.foobar( argument )
+                self.mock.tearDown()
+
+        setattr( TestCase, "test_" + "".join( forbidenOrder ), test )
+
+    TestCase.__name__ = "TestCase_" + "".join( groups )
+        
+    return TestCase
+    
+UnorderedGroup = makeTestCase(
+    "u",
+    [
+        # Completed in any order
+        "aubucudu",
+        "buauducu",
+    ],
+    [
+        # Not completed
+        "aubucu",
+        "aubu",
+        "au",
+        "",
+    ]
+)
+
+OrderedGroup = makeTestCase(
+    "o",
+    [
+        # Completed in good order
+        "aobocodo",
+    ],
+    [
+        # Not completed
+        "aoboco",
+        "aobo",
+        "ao",
+        "",
+        # Wrong order
+        "boaodoco",
+    ]
+)
 
 unittest.main()
