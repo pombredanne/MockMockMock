@@ -36,7 +36,17 @@ class ExpectationGroup:
         self.__ordering = ordering
         self.__completion = completion
         self.__stickyness = stickyness
+        self.__parent = None
         self.__expectations = []
+
+    def setParent( self, parent ):
+        assert( self.__parent is None )
+        self.__parent = parent
+
+    @property
+    def parent( self ):
+        assert( self.__parent is not None )
+        return self.__parent
 
     def addExpectation( self, expectation ):
         self.__expectations.append( expectation )

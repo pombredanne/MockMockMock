@@ -29,7 +29,7 @@ class CallChecker:
 
 class MockEngine( object ):
     def __init__( self, initialGroup ):
-        self.__expectationGroups = [ initialGroup ]
+        self.__currentGroup = initialGroup
 
     # expect
     def expect( self, mockName ):
@@ -42,11 +42,12 @@ class MockEngine( object ):
         return ExpectationProxy( expectation )
 
     def __addExpectation( self, expectation ):
-        self.__expectationGroups[ -1 ].addExpectation( expectation )
+        self.__currentGroup.addExpectation( expectation )
 
     def pushGroup( self, group ):
         self.__addExpectation( group )
-        self.__expectationGroups.append( group )
+        group.setParent( self.__currentGroup )
+        self.__currentGroup = group
         return MockEngine.StackPoper( self )
 
     class StackPoper:
@@ -60,14 +61,14 @@ class MockEngine( object ):
             self.__engine.popGroup()
 
     def popGroup( self ):
-        self.__expectationGroups.pop()
+        self.__currentGroup = self.__currentGroup.parent
 
     # call
     def object( self, mockName ):
         return Checker( self, mockName )
 
     def getCurrentPossibleExpectations( self ):
-        return self.__singleGroup.getCurrentPossibleExpectations()
+        return self.__currentGroup.getCurrentPossibleExpectations()
 
     def checkExpectation( self, calledName ):
         expectations = self.getCurrentPossibleExpectations()
@@ -104,14 +105,9 @@ class MockEngine( object ):
         raise MockException( expectations[ 0 ].name + " called with bad arguments" )
 
     def markExpectationCalled( self, expectation ):
-        self.__singleGroup.markExpectationCalled( expectation )
-
-    @property
-    def __singleGroup( self ):
-        assert( len( self.__expectationGroups ) == 1 )
-        return self.__expectationGroups[ 0 ]
+        self.__currentGroup.markExpectationCalled( expectation )
 
     def tearDown( self ):
-        requiredCalls = self.__singleGroup.nbRequiredCalls()
+        requiredCalls = self.__currentGroup.nbRequiredCalls()
         if requiredCalls:
-            raise MockException( ", ".join( self.__singleGroup.getRequiredCallsExamples() ) + " not called" )
+            raise MockException( ", ".join( self.__currentGroup.getRequiredCallsExamples() ) + " not called" )
