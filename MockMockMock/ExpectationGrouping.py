@@ -1,44 +1,41 @@
-class OrderedExpectationGroup:
-    def __init__( self ):
-        self.__expectations = []
-
-    def addExpectation( self, expectation ):
-        self.__expectations.append( expectation )
-
-    def getCurrentPossibleExpectations( self ):
+class OrderedOrderingPolicy:
+    def getCurrentPossibleExpectations( self, expectations ):
         possible = []
-        for expectation in self.__expectations:
+        for expectation in expectations:
             possible += expectation.getCurrentPossibleExpectations()
             if len( expectation.requiredCalls() ) > 0:
                 break
         return possible
 
-    def removeExpectation( self, expectation ):
-        if expectation is self.__expectations[ 0 ]:
-            self.__expectations = self.__expectations[ 1 : ]
-        else:
-            if self.__expectations[ 0 ].removeExpectation( expectation ):
-                self.__expectations = self.__expectations[ 1 : ]
-        return len( self.__expectations ) == 0
+class UnorderedOrderingPolicy:
+    def getCurrentPossibleExpectations( self, expectations ):
+        possible = []
+        for expectation in expectations:
+            possible += expectation.getCurrentPossibleExpectations()
+        return possible
 
-    def requiredCalls( self ):
+class AllCompletionPolicy:
+    def requiredCalls( self, expectations ):
         required = []
-        for expectation in self.__expectations:
+        for expectation in expectations:
             required += expectation.requiredCalls()
         return required
 
-class UnorderedExpectationGroup:
-    def __init__( self ):
+class UnstickyStickynessPolicy:
+    pass
+
+class ExpectationGroup:
+    def __init__( self, ordering, completion, stickyness ):
+        self.__ordering = ordering
+        self.__completion = completion
+        self.__stickyness = stickyness
         self.__expectations = []
 
     def addExpectation( self, expectation ):
         self.__expectations.append( expectation )
 
     def getCurrentPossibleExpectations( self ):
-        possible = []
-        for expectation in self.__expectations:
-            possible += expectation.getCurrentPossibleExpectations()
-        return possible
+        return self.__ordering.getCurrentPossibleExpectations( self.__expectations )
 
     def removeExpectation( self, expectation ):
         if expectation in self.__expectations:
@@ -51,28 +48,14 @@ class UnorderedExpectationGroup:
         return len( self.__expectations ) == 0
 
     def requiredCalls( self ):
-        required = []
-        for expectation in self.__expectations:
-            required += expectation.requiredCalls()
-        return required
+        return self.__completion.requiredCalls( self.__expectations )
 
-class FacultativeExpectationGroup:
-    def __init__( self ):
-        self.__expectations = []
+def makeGroup( ordering, completion, stickyness ):
+    class Group( ExpectationGroup ):
+        def __init__( self ):
+            ExpectationGroup.__init__( self, ordering(), completion(), stickyness() )
 
-    def addExpectation( self, expectation ):
-        self.__expectations.append( expectation )
+    return Group
 
-    def getCurrentPossibleExpectations( self ):
-        return self.__expectations[ 0 ].getCurrentPossibleExpectations()
-
-    def removeExpectation( self, expectation ):
-        if expectation is self.__expectations[ 0 ]:
-            self.__expectations = self.__expectations[ 1 : ]
-        else:
-            if self.__expectations[ 0 ].removeExpectation( expectation ):
-                self.__expectations = self.__expectations[ 1 : ]
-        return len( self.__expectations ) == 0
-
-    def requiredCalls( self ):
-        return []
+OrderedExpectationGroup = makeGroup( OrderedOrderingPolicy, AllCompletionPolicy, UnstickyStickynessPolicy )
+UnorderedExpectationGroup = makeGroup( UnorderedOrderingPolicy, AllCompletionPolicy, UnstickyStickynessPolicy )
