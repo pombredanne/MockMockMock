@@ -7,12 +7,8 @@ class Expecter:
         self.__mockName = mockName
 
     def __getattr__( self, name ):
-        # Note that accepting name == "__call__" allows the mock object to be callable with no specific code
-        if name == "__dir__":
-            raise AttributeError()
-        expectation = Expectation( self.__mockName + "." + name )
-        self.__engine.addExpectation( expectation )
-        return ExpectationProxy( expectation )
+        if name == "__dir__": raise AttributeError()
+        return self.__engine.addExpectation( self.__mockName + "." + name )
 
 class CallChecker:
     def __init__( self, engine, expectations ):
@@ -20,11 +16,7 @@ class CallChecker:
         self.__expectations = expectations
 
     def __call__( self, *args, **kwds ):
-        for expectation in self.__expectations:
-            if expectation.callPolicy.checkCall( args, kwds ):
-                self.__engine.markExpectationCalled( expectation )
-                return expectation.action()
-        raise MockException( self.__expectations[ 0 ].name + " called with bad arguments" )
+        return self.__engine.checkExpectationCall( self.__expectations, args, kwds )
 
 class Checker:
     def __init__( self, engine, mockName ):
@@ -32,34 +24,8 @@ class Checker:
         self.__mockName = mockName
 
     def __getattr__( self, name ):
-        if name == "__dir__":
-            raise AttributeError()
-        calledName = self.__mockName + "." + name
-        expectations = self.__engine.getCurrentPossibleExpectations()
-
-        goodNamedExpectations = []
-        allGoodNamedExpectationsExpectCall = True
-        allGoodNamedExpectationsExpectNoCall = True
-
-        for expectation in expectations:
-            if expectation.name == calledName:
-                goodNamedExpectations.append( expectation )
-                if expectation.callPolicy.expectsCall:
-                    allGoodNamedExpectationsExpectNoCall = False
-                else:
-                    allGoodNamedExpectationsExpectCall = False
-
-        if len( goodNamedExpectations ) == 0:
-            raise MockException( calledName + " called instead of " + " or ".join( e.name for e in expectations ) )
-
-        if allGoodNamedExpectationsExpectCall:
-            return CallChecker( self.__engine, goodNamedExpectations )
-        elif allGoodNamedExpectationsExpectNoCall:
-            expectation = goodNamedExpectations[ 0 ]
-            self.__engine.markExpectationCalled( expectation )
-            return expectation.action()
-        else:
-            raise MockException( calledName + " is expected as a property and as a method call in an unordered group" )
+        if name == "__dir__": raise AttributeError()
+        return self.__engine.checkExpectation( self.__mockName + "." + name )
 
 class MockEngine( object ):
     class StackPoper:
@@ -81,11 +47,51 @@ class MockEngine( object ):
     def object( self, mockName ):
         return Checker( self, mockName )
 
-    def addExpectation( self, expectation ):
+    def addExpectation( self, name ):
+        # Note that accepting name == "__call__" allows the mock object to be callable with no specific code
+        expectation = Expectation( name )
+        self.__addExpectation( expectation )
+        return ExpectationProxy( expectation )
+
+    def __addExpectation( self, expectation ):
         self.__expectationGroups[ -1 ].addExpectation( expectation )
 
     def getCurrentPossibleExpectations( self ):
         return self.__singleGroup.getCurrentPossibleExpectations()
+
+    def checkExpectation( self, calledName ):
+        expectations = self.getCurrentPossibleExpectations()
+
+        goodNamedExpectations = []
+        allGoodNamedExpectationsExpectCall = True
+        allGoodNamedExpectationsExpectNoCall = True
+
+        for expectation in expectations:
+            if expectation.name == calledName:
+                goodNamedExpectations.append( expectation )
+                if expectation.callPolicy.expectsCall:
+                    allGoodNamedExpectationsExpectNoCall = False
+                else:
+                    allGoodNamedExpectationsExpectCall = False
+
+        if len( goodNamedExpectations ) == 0:
+            raise MockException( calledName + " called instead of " + " or ".join( e.name for e in expectations ) )
+
+        if allGoodNamedExpectationsExpectCall:
+            return CallChecker( self, goodNamedExpectations )
+        elif allGoodNamedExpectationsExpectNoCall:
+            expectation = goodNamedExpectations[ 0 ]
+            self.markExpectationCalled( expectation )
+            return expectation.action()
+        else:
+            raise MockException( calledName + " is expected as a property and as a method call in an unordered group" )
+
+    def checkExpectationCall( self, expectations, args, kwds ):
+        for expectation in expectations:
+            if expectation.callPolicy.checkCall( args, kwds ):
+                self.markExpectationCalled( expectation )
+                return expectation.action()
+        raise MockException( expectations[ 0 ].name + " called with bad arguments" )
 
     def markExpectationCalled( self, expectation ):
         self.__singleGroup.markExpectationCalled( expectation )
@@ -101,7 +107,7 @@ class MockEngine( object ):
             raise MockException( ", ".join( self.__singleGroup.getRequiredCallsExamples() ) + " not called" )
 
     def pushGroup( self, group ):
-        self.addExpectation( group )
+        self.__addExpectation( group )
         self.__expectationGroups.append( group )
         return MockEngine.StackPoper( self )
 
