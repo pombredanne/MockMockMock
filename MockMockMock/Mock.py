@@ -1,10 +1,10 @@
-import MockImpl
+from MockEngine import MockEngine
 from ExpectationGrouping import *
 
 class Mock( object ):
     def __init__( self, name, brotherMock = None ):
         if brotherMock is None:
-            self.__engine = MockImpl.MockEngine( OrderedExpectationGroup() )
+            self.__engine = MockEngine( OrderedExpectationGroup() )
         else:
             self.__engine = brotherMock.__engine
         self.__name = name

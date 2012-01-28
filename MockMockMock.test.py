@@ -14,8 +14,8 @@ class PublicInterface( unittest.TestCase ):
         self.mock = Mock( "MyMock" )
 
     def testMockMockMock( self ):
-        ### @todo Remove MockImpl, SimpleExpectation, ExpectationGrouping from MockMockMock's public interface
-        self.assertEqual( self.dir( MockMockMock ), [ "ArgumentCheckers", "ExpectationGrouping", "Mock", "MockException", "MockImpl", "SimpleExpectation" ] )
+        ### @todo Remove MockEngine, SimpleExpectation, ExpectationGrouping from MockMockMock's public interface
+        self.assertEqual( self.dir( MockMockMock ), [ "ArgumentCheckers", "ExpectationGrouping", "Mock", "MockEngine", "MockException", "SimpleExpectation" ] )
 
     def testMock( self ):
         self.assertEqual( self.dir( self.mock ), [ "alternative", "atomic", "expect", "object", "optional", "ordered", "repeated", "tearDown", "unordered" ] )
