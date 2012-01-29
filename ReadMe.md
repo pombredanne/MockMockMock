@@ -1,46 +1,41 @@
-3 threads: thread 1 appelle A, thread 2 appelle B1 puis B2 puis B3, thread 3 appelle C
-Le mock doit accepter tout ordonancement, y compris B1 A B2 C B3. Donc un ordered dans
-un unordered peut être appelé en plusieurs fois.
+PyMockMockMock is a Python [mocking][wiki_Mock] library.
 
-Une fonction qui doit faire soit A1, A2, B1, B2, soit B1, B2, A1, A2: le mock doit refuser
-A1, B1, A2, B2 donc un unordered composé de 2 ordered ne convient pas. Donc il faut un atomic
-et faire un unordered contenant deux atomic.
+[wiki_Mock]: http://en.wikipedia.org/wiki/Mock_object
 
-----------------------------------------------------------
-# Expect facultative calls
-# Expect repetitions of calls
-# Test groups in groups in groups in...
+Its focus is on as-strict-and-explicit-as-needed definition of the mocks'
+behaviour. This allows very specific unit-tests as well as more generic
+ones.
 
-# Allow other arguments checking than simple constants
-# Maybe mock.expect.foobar.withArguments( 42 ) could be a synonym for mock.expect.foobar( 42 ) and we could add a withArgumentsChecker to handle more complex cases
-# Transmit arguments to andExecute's callable (usefull when repeated, or with other arguments checkers): mock.expect.foobar( 12 ).andExecute( lambda n : n + 1 ).repeated( 5 )
-# Allow positional arguments (*args) to be passed by name (**kwds)
+Basic usage
+===========
 
-# Check that expected properties do not allow call and that expected method calls require call
+Let's say you are writing a class that performs basic statistics on integer
+numbers. This class needs some source of integers. In real execution, they
+could be received from network or read from file. For your unit-tests, you
+have to mock this source to simulate all kind of behaviours.
 
-# Derive a class from unittest.TestCase that provides a mock factory and auto-tearDowns the created mocks
+    import unittest
+    from MockMockMock import Mock
+    
+    from MyModule import MyClass
 
-# Be thread safe
-----------------------------------------------------------
+    class MyTestCase( unittest.TestCase ):
+        def setUp( self ):
+            # Create the mock
+            self.source = Mock( "source" )
+            # Inject it in your class
+            self.myInstance = MyClass( sekf.source.object )
 
-Policies defining a Group:
- - ordering: called to know which calls are possible (returns a collection of Expectations)
-    - Ordered: componants must be call in same order as they were expected
-    - Unordered: componants can be called in any order
- - completion: called to know if the group expects more calls (returns an int) or accepts more calls (returns a bool)
-    - All: all componants must be called
-    - Exactly( n ): exactly n componants must be called
-    - AtLeast( n ): at least n componants must be called
-    - AtMostAllMinus( n ): at most all but n componants can be called
-    - Any: AtLeast( 0 )
-    - Repeated: 
- - stickyness: called to know if next call can be search in parent group (returns a bool)
-    - Sticky: next call must be in same group
-    - Unsticky: next call can be in parent group
+        def tearDown( self ):
+            self.source.tearDown()
 
-ordered = Ordered, All, Unsticky
-unordered = Unordered, All, Unsticky
-atomic = Ordered, All, Sticky
-optional = Ordered, Any, Unsticky
-alternative = Unordered, Exactly( 1 ), Unsticky
-repeated = Ordered, Repeated, Unsticky
+        def testAverage( self ):
+            self.source.expect.getNext( 3 ).andReturn( [ 42, 43, 44 ] )
+            self.assertEqual( self.myInstance.average(), 43 )
+
+        def testNoCatchExceptions( self ):
+            e = TestException()
+            self.source.expect.getNext( 3 ).andRaise( e )
+            with self.assertRaises( TestException ) as cm:
+                self.myInstance.average()
+            self.assertThat( cm.exception is e )
