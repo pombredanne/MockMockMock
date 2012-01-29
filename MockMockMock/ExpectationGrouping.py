@@ -177,6 +177,10 @@ class ExpectationGroup:
     def markExpectationCalled( self, expectation ):
         self.__completion.markExpectationCalled( self.__expectations, expectation )
 
+    def resetCall( self ):
+        for e in self.__expectations:
+            e.resetCall()
+
 def makeGroup( ordering, completion, stickyness ):
     class Group( ExpectationGroup ):
         def __init__( self ):

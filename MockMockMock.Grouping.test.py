@@ -234,4 +234,21 @@ AtomicInUnorderedGroup = makeTestCase(
     ]
 )
 
+UnorderedInRepeatedGroup = makeTestCase(
+    "ru",
+    [
+        "",
+        "rArBuAuBuCuDrCrD",
+        "rArBuAuBuCuDrCrDrArBuAuBuCuDrCrD",
+    ],
+    [
+        # Partial
+        "rArBuAuBuCrC",
+    ],
+    [
+        # Partial
+        "rArBuAuBuCuDrC",
+    ]
+)
+
 unittest.main()
