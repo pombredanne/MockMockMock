@@ -24,12 +24,18 @@ class AllCompletionPolicy:
     def acceptsMoreCalls( self, expectations ):
         return any( len(expectation.getCurrentPossibleExpectations() ) != 0 for expectation in expectations )
 
+    def markExpectationCalled( self, expectations, expectation ):
+        pass
+
 class AnyCompletionPolicy:
     def nbRequiredCalls( self, expectations ):
         return 0
 
     def acceptsMoreCalls( self, expectations ):
         return True
+
+    def markExpectationCalled( self, expectations, expectation ):
+        pass
 
 class ExactlyOneCompletionPolicy:
     def nbRequiredCalls( self, expectations ):
@@ -42,7 +48,24 @@ class ExactlyOneCompletionPolicy:
     def acceptsMoreCalls( self, expectations ):
         return self.nbRequiredCalls( expectations ) == 1
 
-RepeatedCompletionPolicy = AllCompletionPolicy
+    def markExpectationCalled( self, expectations, expectation ):
+        pass
+
+class RepeatedCompletionPolicy:
+    def nbRequiredCalls( self, expectations ):
+        required = 0
+        if expectations[ 0 ].called:
+            for expectation in expectations:
+                required += expectation.nbRequiredCalls()
+        return required
+
+    def acceptsMoreCalls( self, expectations ):
+        return True
+
+    def markExpectationCalled( self, expectations, expectation ):
+        if expectation is expectations[ -1 ]:
+            for e in expectations:
+                e.resetCall()
 
 class UnstickyStickynessPolicy:
     def sticky( self ):
@@ -87,9 +110,17 @@ class ExpectationWrapper( object ):
         else:
             return 1
 
+    @property
+    def called( self ):
+        return self.__called
+
     def call( self ):
         self.__called = True
+        self.__parent.markExpectationCalled( self )
         return self.__expectation.call(), self.__parent.rewindGroups()
+
+    def resetCall( self ):
+        self.__called = False
 
 class ExpectationGroup:
     def __init__( self, ordering, completion, stickyness ):
@@ -127,6 +158,7 @@ class ExpectationGroup:
         return self.__completion.nbRequiredCalls( self.__expectations )
 
     def getRequiredCallsExamples( self ):
+        ### @todo Implement
         return [ "MyMock.foobar" ]
 
     def rewindGroups( self ):
@@ -141,6 +173,9 @@ class ExpectationGroup:
         if self.__stickyness.sticky():
             return len( self.getCurrentPossibleExpectations() ) != 0
         return False
+
+    def markExpectationCalled( self, expectation ):
+        self.__completion.markExpectationCalled( self.__expectations, expectation )
 
 def makeGroup( ordering, completion, stickyness ):
     class Group( ExpectationGroup ):

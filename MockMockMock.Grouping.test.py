@@ -172,6 +172,27 @@ AlternativeGroup = makeTestCase(
     ]
 )
 
+RepeatedGroup = makeTestCase(
+    "r",
+    [
+        # Zero call
+        "",
+        # One time
+        "rArBrCrD",
+        # Several times
+        "rArBrCrDrArBrCrD",
+        # "rArBrCrDrArBrCrDrArBrCrD",
+    ],
+    [
+    ],
+    [
+        # Partial calls
+        "rArB",
+        # "rArBrCrDrArB",
+        # "rArBrCrDrArBrCrDrArB",
+    ]
+)
+
 OrderedInUnorderedGroup = makeTestCase(
     "uo",
     [
