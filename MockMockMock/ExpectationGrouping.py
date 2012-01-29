@@ -21,11 +21,27 @@ class AllCompletionPolicy:
             required += expectation.nbRequiredCalls()
         return required
 
+    def acceptsMoreCalls( self, expectations ):
+        return any( len(expectation.getCurrentPossibleExpectations() ) != 0 for expectation in expectations )
+
 class AnyCompletionPolicy:
     def nbRequiredCalls( self, expectations ):
         return 0
 
-ExactlyOneCompletionPolicy = AllCompletionPolicy
+    def acceptsMoreCalls( self, expectations ):
+        return True
+
+class ExactlyOneCompletionPolicy:
+    def nbRequiredCalls( self, expectations ):
+        required = 1
+        for expectation in expectations:
+            if len( expectation.getCurrentPossibleExpectations() ) == 0:
+                required = 0
+        return required
+
+    def acceptsMoreCalls( self, expectations ):
+        return self.nbRequiredCalls( expectations ) == 1
+
 RepeatedCompletionPolicy = AllCompletionPolicy
 
 class UnstickyStickynessPolicy:
@@ -57,7 +73,10 @@ class ExpectationGroup:
         self.__expectations.append( expectation )
 
     def getCurrentPossibleExpectations( self ):
-        return self.__ordering.getCurrentPossibleExpectations( self.__expectations )
+        if self.__completion.acceptsMoreCalls( self.__expectations ):
+            return self.__ordering.getCurrentPossibleExpectations( self.__expectations )
+        else:
+            return []
 
     def nbRequiredCalls( self ):
         return self.__completion.nbRequiredCalls( self.__expectations )

@@ -152,6 +152,26 @@ OptionalGroup = makeTestCase(
     ]
 )
 
+AlternativeGroup = makeTestCase(
+    "l",
+    [
+        # One call
+        "lA",
+        "lB",
+        "lC",
+        "lD",
+    ],
+    [
+        # Two calls
+        "lAlB",
+        "lBlA",
+    ],
+    [
+        # No call
+        "",
+    ]
+)
+
 OrderedInUnorderedGroup = makeTestCase(
     "uo",
     [
