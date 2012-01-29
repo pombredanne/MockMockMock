@@ -15,31 +15,31 @@ def makeExpectations( mock, groups ):
     if len( groups ) > 0:
         group = groups[ 0 ]
         with groupMakers[ group ]( mock ):
-            mock.expect.foobar( group + "a" )
-            mock.expect.foobar( group + "b" )
+            mock.expect.foobar( group + "A" )
+            mock.expect.foobar( group + "B" )
             makeExpectations( mock, groups[ 1: ] )
-            mock.expect.foobar( group + "c" )
-            mock.expect.foobar( group + "d" )
+            mock.expect.foobar( group + "C" )
+            mock.expect.foobar( group + "D" )
 
 def testAllowedOrder( allowedOrder ):
     def test( self ):
         for argument in allowedOrder:
-            self.mock.object.foobar( argument )
+            self.call( argument )
         self.mock.tearDown()
     return test
 
 def testForbidenOrder( forbidenOrder ):
     def test( self ):
         for argument in forbidenOrder[ : -1 ]:
-            self.mock.object.foobar( argument )
+            self.call( argument )
         with self.assertRaises( MockException ):
-                self.mock.object.foobar( forbidenOrder[ -1 ] )
+            self.call( forbidenOrder[ -1 ] )
     return test
 
 def testTearDownError( forbidenOrder ):
     def test( self ):
         for argument in forbidenOrder:
-            self.mock.object.foobar( argument )
+            self.call( argument )
         with self.assertRaises( MockException ):
             self.mock.tearDown()
     return test
@@ -74,6 +74,12 @@ def makeTestCase( groups, allowedOrders, forbidenOrders, tearDownErrors ):
             self.mock = Mock( "MyMock" )
             makeExpectations( self.mock, groups )
 
+        def call( self, argument ):
+            assert( len( argument ) == 2 )
+            assert( argument[ 0 ] in groupMakers )
+            assert( argument[ 1 ] in "ABCDX" )
+            self.mock.object.foobar( argument )
+
     for allowedOrder in allowedOrders:
         setattr( TestCase, "test_" + "".join( allowedOrder ), testAllowedOrder( allowedOrder ) )
 
@@ -91,19 +97,19 @@ UnorderedGroup = makeTestCase(
     "u",
     [
         # Completed in any order
-        "uaubucud",
-        "ubuauduc",
-        "ubucuaud",
+        "uAuBuCuD",
+        "uBuAuDuC",
+        "uBuCuAuD",
     ],
     [
-        # Bad argument
-        "uaxx",
+        # BaD argument
+        "uAuX",
     ],
     [
         # Not completed
-        "uaubuc",
-        "uaub",
-        "ua",
+        "uAuBuC",
+        "uAuB",
+        "uA",
         "",
     ]
 )
@@ -112,17 +118,17 @@ OrderedGroup = makeTestCase(
     "o",
     [
         # Completed in good order
-        "oaobocod",
+        "oAoBoCoD",
     ],
     [
         # Wrong order
-        "ob",
+        "oB",
     ],
     [
         # Not completed
-        "oaoboc",
-        "oaob",
-        "oa",
+        "oAoBoC",
+        "oAoB",
+        "oA",
         "",
     ]
 )
@@ -131,16 +137,16 @@ OptionalGroup = makeTestCase(
     "p",
     [
         # Completed in good order
-        "papbpcpd",
+        "pApBpCpD",
         # Not completed
-        "papbpc",
-        "papb",
-        "pa",
+        "pApBpC",
+        "pApB",
+        "pA",
         "",
     ],
     [
         # Wrong order
-        "pb",
+        "pB",
     ],
     [
     ]
@@ -150,18 +156,18 @@ OrderedInUnorderedGroup = makeTestCase(
     "uo",
     [
         # Original order
-        "uauboaobocoducud",
+        "uAuBoAoBoCoDuCuD",
         # Other possible orders
         #  ordered group at once
-        "oaobocoduaubucud",
-        "uaubucudoaobocod",
+        "oAoBoCoDuAuBuCuD",
+        "uAuBuCuDoAoBoCoD",
         #  ordered group in pieces
-        "oauaobubocucodud",
-        "oaudobucocubodua",
+        "oAuAoBuBoCuCoDuD",
+        "oAuDoBuCoCuBoDuA",
     ],
     [
         # Ordered group in wrong order
-        "uaubob",
+        "uAuBoB",
     ],
     [
     ]
@@ -171,18 +177,18 @@ OrderedInUnorderedGroup = makeTestCase(
     # "ua",
     # [
         # # Original order
-        # "uaubaaabacaducud",
+        # "uAuBaAaBaCaDuCuD",
         # # Other possible orders
         # #  atomic group at once
-        # "aaabacaduaubucud",
-        # "uaubucudaaabacad",
+        # "aAaBaCaDuAuBuCuD",
+        # "uAuBuCuDaAaBaCaD",
     # ],
     # [
         # # Atomic group in wrong order
-        # "uaubabaaacaducud",
+        # "uAuBaBaAaCaDuCuD",
         # # Atomic group in pieces
-        # "aauaabubacucadud",
-        # "aaudabucacubadua",
+        # "aAuaaBuBaCuCaDuD",
+        # "aAuDaBuCaCuBaDuA",
     # ],
     # [
     # ]
