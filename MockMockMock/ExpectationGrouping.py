@@ -21,7 +21,10 @@ class AllCompletionPolicy:
             required += expectation.nbRequiredCalls()
         return required
 
-AnyCompletionPolicy = AllCompletionPolicy
+class AnyCompletionPolicy:
+    def nbRequiredCalls( self, expectations ):
+        return 0
+
 ExactlyOneCompletionPolicy = AllCompletionPolicy
 RepeatedCompletionPolicy = AllCompletionPolicy
 
