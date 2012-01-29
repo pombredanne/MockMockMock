@@ -268,4 +268,38 @@ class ArgumentCheckers( unittest.TestCase ):
         self.assertFalse( c( ( 1, 2, 3 ), { 1: 1, 2: 2, 3: 4 } ) )
         self.assertFalse( c( ( 1, 2, 4 ), { 1: 1, 2: 2, 3: 3 } ) )
 
+class Ordering( unittest.TestCase ):
+    def setUp( self ):
+        unittest.TestCase.setUp( self )
+        self.mock = Mock( "MyMock" )
+
+    def testUnorderedGroupOfSameMethod( self ):
+        with self.mock.unordered:
+            self.mock.expect.foobar( 1 ).andReturn( 11 )
+            self.mock.expect.foobar( 1 ).andReturn( 13 )
+            self.mock.expect.foobar( 2 ).andReturn( 12 )
+            self.mock.expect.foobar( 1 ).andReturn( 14 )
+        self.assertEqual( self.mock.object.foobar( 2 ), 12 )
+        self.assertEqual( self.mock.object.foobar( 1 ), 11 )
+        self.assertEqual( self.mock.object.foobar( 1 ), 13 )
+        self.assertEqual( self.mock.object.foobar( 1 ), 14 )
+        self.mock.tearDown()
+
+    ### @todo Allow unordered property and method calls on the same name: difficult
+    def testUnorderedGroupOfSameMethodAndProperty( self ):
+        with self.assertRaises( MockException ) as cm:
+            with self.mock.unordered:
+                self.mock.expect.foobar()
+                self.mock.expect.foobar
+            self.mock.object.foobar
+        self.assertEqual( cm.exception.message, "MyMock.foobar is expected as a property and as a method call in an unordered group" )
+
+    def testUnorderedGroupOfSamePropertyAndMethod( self ):
+        with self.assertRaises( MockException ) as cm:
+            with self.mock.unordered:
+                self.mock.expect.foobar
+                self.mock.expect.foobar()
+            self.mock.object.foobar()
+        self.assertEqual( cm.exception.message, "MyMock.foobar is expected as a property and as a method call in an unordered group" )
+
 unittest.main()
