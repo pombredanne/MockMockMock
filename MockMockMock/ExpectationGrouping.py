@@ -29,10 +29,12 @@ ExactlyOneCompletionPolicy = AllCompletionPolicy
 RepeatedCompletionPolicy = AllCompletionPolicy
 
 class UnstickyStickynessPolicy:
-    pass
+    def sticky( self ):
+        return False
 
 class StickyStickynessPolicy:
-    pass
+    def sticky( self ):
+        return True
 
 class ExpectationGroup:
     def __init__( self, ordering, completion, stickyness ):
@@ -57,21 +59,24 @@ class ExpectationGroup:
     def getCurrentPossibleExpectations( self ):
         return self.__ordering.getCurrentPossibleExpectations( self.__expectations )
 
-    def markExpectationCalled( self, expectation ):
-        if expectation in self.__expectations:
-            self.__expectations.remove( expectation )
-        else:
-            for e in self.__expectations:
-                if e.markExpectationCalled( expectation ):
-                    self.__expectations.remove( e )
-                    break
-        return len( self.__expectations ) == 0
-
     def nbRequiredCalls( self ):
         return self.__completion.nbRequiredCalls( self.__expectations )
 
     def getRequiredCallsExamples( self ):
         return [ "MyMock.foobar" ]
+
+    def rewindGroups( self ):
+        if self.__shallStick():
+            return self
+        else:
+            return self.__parent.rewindGroups()
+
+    def __shallStick( self ):
+        if self.__parent is None:
+            return True
+        if self.__stickyness.sticky():
+            return len( self.getCurrentPossibleExpectations() ) != 0
+        return False
 
 def makeGroup( ordering, completion, stickyness ):
     class Group( ExpectationGroup ):

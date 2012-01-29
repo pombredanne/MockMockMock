@@ -42,11 +42,11 @@ class MockEngine( object ):
         return ExpectationProxy( expectation )
 
     def __addExpectation( self, expectation ):
+        expectation.setParent( self.__currentGroup )
         self.__currentGroup.addExpectation( expectation )
 
     def pushGroup( self, group ):
         self.__addExpectation( group )
-        group.setParent( self.__currentGroup )
         self.__currentGroup = group
         return MockEngine.StackPoper( self )
 
@@ -84,17 +84,19 @@ class MockEngine( object ):
             return CallChecker( self, goodNamedExpectations )
         elif allGoodNamedExpectationsExpectNoCall:
             expectation = goodNamedExpectations[ 0 ]
-            self.__currentGroup.markExpectationCalled( expectation )
-            return expectation.action()
+            return self.__callExpectation( expectation )
         else:
             raise MockException( calledName + " is expected as a property and as a method call in an unordered group" )
 
     def checkExpectationCall( self, expectations, args, kwds ):
         for expectation in expectations:
             if expectation.callPolicy.checkCall( args, kwds ):
-                self.__currentGroup.markExpectationCalled( expectation )
-                return expectation.action()
+                return self.__callExpectation( expectation )
         raise MockException( expectations[ 0 ].name + " called with bad arguments" )
+
+    def __callExpectation( self, expectation ):
+        self.__currentGroup = expectation.markExpectationCalled()
+        return expectation.action()
 
     def tearDown( self ):
         requiredCalls = self.__currentGroup.nbRequiredCalls()

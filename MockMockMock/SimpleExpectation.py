@@ -21,19 +21,28 @@ class Expectation( object ):
         self.name = name
         self.callPolicy = PropertyCallPolicy()
         self.action = lambda : None
+        self.__parent = None
+        self.__called = False
+
+    def setParent( self, parent ):
+        assert( self.__parent is None )
+        self.__parent = parent
 
     def getCurrentPossibleExpectations( self ):
-        return [ self ]
-
-    def requiredCalls( self ):
-        return [ self ]
+        if self.__called:
+            return []
+        else:
+            return [ self ]
 
     def nbRequiredCalls( self ):
-        return 1
+        if self.__called:
+            return 0
+        else:
+            return 1
 
-    def markExpectationCalled( self, expectation ):
-        assert( self is not expectation )
-        return False
+    def markExpectationCalled( self ):
+        self.__called = True
+        return self.__parent.rewindGroups()
 
 class BasicExpectationProxy:
     def __init__( self, expectation ):

@@ -173,25 +173,24 @@ OrderedInUnorderedGroup = makeTestCase(
     ]
 )
 
-# AtomicInUnorderedGroup = makeTestCase(
-    # "ua",
-    # [
-        # # Original order
-        # "uAuBaAaBaCaDuCuD",
-        # # Other possible orders
-        # #  atomic group at once
-        # "aAaBaCaDuAuBuCuD",
-        # "uAuBuCuDaAaBaCaD",
-    # ],
-    # [
-        # # Atomic group in wrong order
-        # "uAuBaBaAaCaDuCuD",
-        # # Atomic group in pieces
-        # "aAuaaBuBaCuCaDuD",
-        # "aAuDaBuCaCuBaDuA",
-    # ],
-    # [
-    # ]
-# )
+AtomicInUnorderedGroup = makeTestCase(
+    "ua",
+    [
+        # Original order
+        "uAuBaAaBaCaDuCuD",
+        # Other possible orders
+        #  atomic group at once
+        "aAaBaCaDuAuBuCuD",
+        "uAuBuCuDaAaBaCaD",
+    ],
+    [
+        # Atomic group in wrong order
+        "uAuBaB",
+        # Atomic group in pieces
+        "uAaAuB",
+    ],
+    [
+    ]
+)
 
 unittest.main()
