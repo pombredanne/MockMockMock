@@ -30,13 +30,21 @@ def testAllowedOrder( allowedOrder ):
 
 def testForbidenOrder( forbidenOrder ):
     def test( self ):
+        for argument in forbidenOrder[ : -1 ]:
+            self.mock.object.foobar( argument )
         with self.assertRaises( MockException ):
-            for argument in forbidenOrder:
-                self.mock.object.foobar( argument )
+                self.mock.object.foobar( forbidenOrder[ -1 ] )
+    return test
+
+def testTearDownError( forbidenOrder ):
+    def test( self ):
+        for argument in forbidenOrder:
+            self.mock.object.foobar( argument )
+        with self.assertRaises( MockException ):
             self.mock.tearDown()
     return test
 
-def makeTestCase( groups, allowedOrders, forbidenOrders ):
+def makeTestCase( groups, allowedOrders, forbidenOrders, tearDownErrors ):
     groups = list( groups )
     allowedOrders = [
         [
@@ -52,6 +60,13 @@ def makeTestCase( groups, allowedOrders, forbidenOrders ):
         ]
         for forbidenOrder in forbidenOrders
     ]
+    tearDownErrors = [
+        [
+            tearDownError[ 2 * i : 2 * i + 2 ]
+            for i in range( len( tearDownError ) / 2 )
+        ]
+        for tearDownError in tearDownErrors
+    ]
 
     class TestCase( unittest.TestCase ):
         def setUp( self ):
@@ -64,6 +79,9 @@ def makeTestCase( groups, allowedOrders, forbidenOrders ):
 
     for forbidenOrder in forbidenOrders:
         setattr( TestCase, "test_" + "".join( forbidenOrder ), testForbidenOrder( forbidenOrder ) )
+
+    for tearDownError in tearDownErrors:
+        setattr( TestCase, "test_" + "".join( tearDownError ), testTearDownError( tearDownError ) )
 
     TestCase.__name__ = "TestCase_" + "".join( groups )
         
@@ -78,13 +96,15 @@ UnorderedGroup = makeTestCase(
         "ubucuaud",
     ],
     [
+        # Bad argument
+        "uaxx",
+    ],
+    [
         # Not completed
         "uaubuc",
         "uaub",
         "ua",
         "",
-        # Bad argument
-        "uaxx",
     ]
 )
 
@@ -95,32 +115,36 @@ OrderedGroup = makeTestCase(
         "oaobocod",
     ],
     [
+        # Wrong order
+        "ob",
+    ],
+    [
         # Not completed
         "oaoboc",
         "oaob",
         "oa",
         "",
-        # Wrong order
-        "oboaodoc",
     ]
 )
 
-# OptionalGroup = makeTestCase(
-    # "p",
-    # [
-        # # Completed in good order
-        # "oaobocod",
-        # # Not completed
-        # "oaoboc",
-        # "oaob",
-        # "oa",
-        # "",
-    # ],
-    # [
-        # # Wrong order
-        # "oboaodoc",
-    # ]
-# )
+OptionalGroup = makeTestCase(
+    "p",
+    [
+        # Completed in good order
+        "papbpcpd",
+        # Not completed
+        "papbpc",
+        "papb",
+        "pa",
+        "",
+    ],
+    [
+        # Wrong order
+        "pb",
+    ],
+    [
+    ]
+)
 
 OrderedInUnorderedGroup = makeTestCase(
     "uo",
@@ -137,7 +161,9 @@ OrderedInUnorderedGroup = makeTestCase(
     ],
     [
         # Ordered group in wrong order
-        "uauboboaocoducud",
+        "uaubob",
+    ],
+    [
     ]
 )
 
@@ -157,6 +183,8 @@ OrderedInUnorderedGroup = makeTestCase(
         # # Atomic group in pieces
         # "aauaabubacucadud",
         # "aaudabucacubadua",
+    # ],
+    # [
     # ]
 # )
 
