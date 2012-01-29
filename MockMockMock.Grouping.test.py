@@ -21,6 +21,21 @@ def makeExpectations( mock, groups ):
             mock.expect.foobar( group + "c" )
             mock.expect.foobar( group + "d" )
 
+def testAllowedOrder( allowedOrder ):
+    def test( self ):
+        for argument in allowedOrder:
+            self.mock.object.foobar( argument )
+        self.mock.tearDown()
+    return test
+
+def testForbidenOrder( forbidenOrder ):
+    def test( self ):
+        with self.assertRaises( MockException ):
+            for argument in forbidenOrder:
+                self.mock.object.foobar( argument )
+            self.mock.tearDown()
+    return test
+
 def makeTestCase( groups, allowedOrders, forbidenOrders ):
     groups = list( groups )
     allowedOrders = [
@@ -45,21 +60,10 @@ def makeTestCase( groups, allowedOrders, forbidenOrders ):
             makeExpectations( self.mock, groups )
 
     for allowedOrder in allowedOrders:
-        def test( self ):
-            for argument in allowedOrder:
-                self.mock.object.foobar( argument )
-            self.mock.tearDown()
-
-        setattr( TestCase, "test_" + "".join( allowedOrder ), test )
+        setattr( TestCase, "test_" + "".join( allowedOrder ), testAllowedOrder( allowedOrder ) )
 
     for forbidenOrder in forbidenOrders:
-        def test( self ):
-            with self.assertRaises( MockException ):
-                for argument in forbidenOrder:
-                    self.mock.object.foobar( argument )
-                self.mock.tearDown()
-
-        setattr( TestCase, "test_" + "".join( forbidenOrder ), test )
+        setattr( TestCase, "test_" + "".join( forbidenOrder ), testForbidenOrder( forbidenOrder ) )
 
     TestCase.__name__ = "TestCase_" + "".join( groups )
         
@@ -80,7 +84,7 @@ UnorderedGroup = makeTestCase(
         "ua",
         "",
         # Bad argument
-        "uaxx" ,
+        "uaxx",
     ]
 )
 
