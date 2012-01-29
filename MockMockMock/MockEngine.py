@@ -1,5 +1,6 @@
 from MockException import MockException
-from SimpleExpectation import Expectation, ExpectationProxy
+from Expectation import Expectation
+import ArgumentChecking
 
 class Expecter:
     def __init__( self, engine, mockName ):
@@ -27,6 +28,33 @@ class CallChecker:
     def __call__( self, *args, **kwds ):
         return self.__engine.checkExpectationCall( self.__expectations, args, kwds )
 
+class BasicExpectationProxy:
+    def __init__( self, expectation ):
+        self.__expectation = expectation
+
+    def andReturn( self, value ):
+        return self.andExecute( lambda : value )
+
+    def andRaise( self, exception ):
+        def Raise(): raise exception
+        return self.andExecute( Raise )
+
+    def andExecute( self, action ):
+        self.__expectation.setAction( action )
+        return None
+
+class CallableExpectationProxy( BasicExpectationProxy ):
+    def __init__( self, expectation ):
+        BasicExpectationProxy.__init__( self, expectation )
+        self.__expectation = expectation
+
+    def __call__( self, *args, **kwds ):
+        return self.withArguments( ArgumentChecking.Equality( args, kwds ) )
+
+    def withArguments( self, checker ):
+        self.__expectation.expectCall( checker )
+        return BasicExpectationProxy( self.__expectation )
+
 class MockEngine( object ):
     def __init__( self, initialGroup ):
         self.__currentGroup = initialGroup
@@ -38,15 +66,11 @@ class MockEngine( object ):
     def addExpectation( self, name ):
         # Note that accepting name == "__call__" allows the mock object to be callable with no specific code
         expectation = Expectation( name )
-        self.__addExpectation( expectation )
-        return ExpectationProxy( expectation )
-
-    def __addExpectation( self, expectation ):
-        expectation.setParent( self.__currentGroup )
         self.__currentGroup.addExpectation( expectation )
+        return CallableExpectationProxy( expectation )
 
     def pushGroup( self, group ):
-        self.__addExpectation( group )
+        self.__currentGroup.addGroup( group )
         self.__currentGroup = group
         return MockEngine.StackPoper( self )
 
@@ -72,7 +96,7 @@ class MockEngine( object ):
         for expectation in expectations:
             if expectation.name == calledName:
                 goodNamedExpectations.append( expectation )
-                if expectation.callPolicy.expectsCall:
+                if expectation.expectsCall():
                     allGoodNamedExpectationsExpectNoCall = False
                 else:
                     allGoodNamedExpectationsExpectCall = False
@@ -90,13 +114,13 @@ class MockEngine( object ):
 
     def checkExpectationCall( self, expectations, args, kwds ):
         for expectation in expectations:
-            if expectation.callPolicy.checkCall( args, kwds ):
+            if expectation.checkCall( args, kwds ):
                 return self.__callExpectation( expectation )
         raise MockException( expectations[ 0 ].name + " called with bad arguments" )
 
     def __callExpectation( self, expectation ):
-        self.__currentGroup = expectation.markExpectationCalled()
-        return expectation.action()
+        returnValue, self.__currentGroup = expectation.call()
+        return returnValue
 
     def tearDown( self ):
         requiredCalls = self.__currentGroup.nbRequiredCalls()

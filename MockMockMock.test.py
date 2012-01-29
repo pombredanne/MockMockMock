@@ -16,11 +16,11 @@ class PublicInterface( unittest.TestCase ):
     def testMockMockMock( self ):
         self.assertEqual( self.dir( MockMockMock ), [
             "ArgumentChecking",
+            "Expectation", ### @todo Remove
             "ExpectationGrouping", ### @todo Remove
             "Mock",
             "MockEngine", ### @todo Remove
             "MockException",
-            "SimpleExpectation" ### @todo Remove
         ] )
 
     def testMock( self ):

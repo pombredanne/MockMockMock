@@ -52,6 +52,42 @@ class StickyStickynessPolicy:
     def sticky( self ):
         return True
 
+class ExpectationWrapper( object ):
+    def __init__( self, expectation ):
+        self.__expectation = expectation
+        self.__parent = None
+        self.__called = False
+
+    @property
+    def name( self ):
+        return self.__expectation.name
+
+    def expectsCall( self ):
+        return self.__expectation.expectsCall()
+
+    def checkCall( self, args, kwds ):
+        return self.__expectation.checkCall( args, kwds )
+
+    def setParent( self, parent ):
+        assert( self.__parent is None )
+        self.__parent = parent
+
+    def getCurrentPossibleExpectations( self ):
+        if self.__called:
+            return []
+        else:
+            return [ self ]
+
+    def nbRequiredCalls( self ):
+        if self.__called:
+            return 0
+        else:
+            return 1
+
+    def call( self ):
+        self.__called = True
+        return self.__expectation.call(), self.__parent.rewindGroups()
+
 class ExpectationGroup:
     def __init__( self, ordering, completion, stickyness ):
         self.__ordering = ordering
@@ -70,7 +106,13 @@ class ExpectationGroup:
         return self.__parent
 
     def addExpectation( self, expectation ):
-        self.__expectations.append( expectation )
+        wrapper = ExpectationWrapper( expectation )
+        wrapper.setParent( self )
+        self.__expectations.append( wrapper )
+
+    def addGroup( self, group ):
+        group.setParent( self )
+        self.__expectations.append( group )
 
     def getCurrentPossibleExpectations( self ):
         if self.__completion.acceptsMoreCalls( self.__expectations ):
