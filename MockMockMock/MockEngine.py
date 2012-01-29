@@ -87,28 +87,19 @@ class MockEngine( object ):
         return Checker( self, mockName )
 
     def checkExpectation( self, calledName ):
-        expectations = self.__currentGroup.getCurrentPossibleExpectations()
-
-        goodNamedExpectations = []
-        allGoodNamedExpectationsExpectCall = True
-        allGoodNamedExpectationsExpectNoCall = True
-
-        for expectation in expectations:
-            if expectation.name == calledName:
-                goodNamedExpectations.append( expectation )
-                if expectation.expectsCall():
-                    allGoodNamedExpectationsExpectNoCall = False
-                else:
-                    allGoodNamedExpectationsExpectCall = False
+        possibleExpectations = self.__currentGroup.getCurrentPossibleExpectations()
+        goodNamedExpectations = [ expectation for expectation in possibleExpectations if expectation.checkName( calledName ) ]
 
         if len( goodNamedExpectations ) == 0:
-            raise MockException( calledName + " called instead of " + " or ".join( e.name for e in expectations ) )
+            raise MockException( calledName + " called instead of " + " or ".join( e.name for e in possibleExpectations ) )
+
+        allGoodNamedExpectationsExpectNoCall = not any( expectation.expectsCall() for expectation in goodNamedExpectations )
+        allGoodNamedExpectationsExpectCall = all( expectation.expectsCall() for expectation in goodNamedExpectations )
 
         if allGoodNamedExpectationsExpectCall:
             return CallChecker( self, goodNamedExpectations )
         elif allGoodNamedExpectationsExpectNoCall:
-            expectation = goodNamedExpectations[ 0 ]
-            return self.__callExpectation( expectation )
+            return self.__callExpectation( goodNamedExpectations[ 0 ] )
         else:
             raise MockException( calledName + " is expected as a property and as a method call in an unordered group" )
 

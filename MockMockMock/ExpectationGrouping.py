@@ -68,6 +68,9 @@ class ExpectationWrapper( object ):
     def checkCall( self, args, kwds ):
         return self.__expectation.checkCall( args, kwds )
 
+    def checkName( self, name ):
+        return self.__expectation.checkName( name )
+
     def setParent( self, parent ):
         assert( self.__parent is None )
         self.__parent = parent

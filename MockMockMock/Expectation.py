@@ -12,6 +12,9 @@ class Expectation( object ):
         self.__action = action
 
     # check
+    def checkName( self, name ):
+        return self.name == name
+
     def expectsCall( self ):
         return self.__checker is not None
 
