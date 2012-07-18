@@ -1,8 +1,8 @@
 PyMockMockMock is a Python
 [mocking](http://en.wikipedia.org/wiki/Mock_object) library.
 
-It focuses on as-strict-and-explicit-as-needed definition of the mocks' behaviour.
-This allows very specific unit-tests as well as more generic ones.
+It focuses on very explicit definition of the mocks' behaviour.
+It allows as-specific-as-needed unit-tests as well as more generic ones.
 
 Basic usage
 ===========

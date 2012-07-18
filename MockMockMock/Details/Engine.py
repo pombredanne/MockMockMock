@@ -1,6 +1,6 @@
-from MockException import MockException
-from Expectation import Expectation
-import ArgumentChecking
+from MockMockMock.MockException import MockException
+from MockMockMock.Expectation import Expectation
+import MockMockMock.ArgumentChecking as ArgumentChecking
 
 class Expecter:
     def __init__( self, engine, mockName ):
@@ -10,6 +10,9 @@ class Expecter:
     def __getattr__( self, name ):
         if name == "__dir__": raise AttributeError()
         return self.__engine.addExpectation( self.__mockName + "." + name )
+
+    def __call__( self, *args, **kwds ): # Needed to make isinstance( mock.expect, collections.Callable ) return True
+        return self.__getattr__( "__call__" )( *args, **kwds )
 
 class Checker:
     def __init__( self, engine, mockName ):
@@ -55,7 +58,7 @@ class CallableExpectationProxy( BasicExpectationProxy ):
         self.__expectation.expectCall( checker )
         return BasicExpectationProxy( self.__expectation )
 
-class MockEngine( object ):
+class Engine( object ):
     def __init__( self, initialGroup ):
         self.__currentGroup = initialGroup
 
@@ -72,7 +75,7 @@ class MockEngine( object ):
     def pushGroup( self, group ):
         self.__currentGroup.addGroup( group )
         self.__currentGroup = group
-        return MockEngine.StackPoper( self )
+        return self.StackPoper( self )
 
     class StackPoper:
         def __init__( self, engine ): self.__engine = engine
