@@ -1,27 +1,18 @@
-from MockMockMock.MockException import MockException
-from MockMockMock.Expectation import Expectation
-import MockMockMock.ArgumentChecking as ArgumentChecking
+from MockException import MockException
+from Expectation import Expectation
+import ArgumentChecking
 
-class Expecter:
-    def __init__( self, engine, mockName ):
-        self.__engine = engine
+class AnyAttribute:
+    def __init__( self, apply, mockName ):
+        self.__apply = apply
         self.__mockName = mockName
 
     def __getattr__( self, name ):
         if name == "__dir__": raise AttributeError()
-        return self.__engine.addExpectation( self.__mockName + "." + name )
+        return self.__apply( self.__mockName + "." + name )
 
     def __call__( self, *args, **kwds ): # Needed to make isinstance( mock.expect, collections.Callable ) return True
         return self.__getattr__( "__call__" )( *args, **kwds )
-
-class Checker:
-    def __init__( self, engine, mockName ):
-        self.__engine = engine
-        self.__mockName = mockName
-
-    def __getattr__( self, name ):
-        if name == "__dir__": raise AttributeError()
-        return self.__engine.checkExpectation( self.__mockName + "." + name )
 
 class CallChecker:
     def __init__( self, engine, expectations ):
@@ -64,7 +55,7 @@ class Engine( object ):
 
     # expect
     def expect( self, mockName ):
-        return Expecter( self, mockName )
+        return AnyAttribute( self.addExpectation, mockName )
 
     def addExpectation( self, name ):
         # Note that accepting name == "__call__" allows the mock object to be callable with no specific code
@@ -87,7 +78,7 @@ class Engine( object ):
 
     # call
     def object( self, mockName ):
-        return Checker( self, mockName )
+        return AnyAttribute( self.checkExpectation, mockName )
 
     def checkExpectation( self, calledName ):
         possibleExpectations = self.__currentGroup.getCurrentPossibleExpectations()

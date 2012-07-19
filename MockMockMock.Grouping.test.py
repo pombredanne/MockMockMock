@@ -1,23 +1,23 @@
 import unittest
 
-from MockMockMock import Mock, MockException
+import MockMockMock
 
 groupMakers = {
-    "o" : lambda m: m.ordered,
-    "u" : lambda m: m.unordered,
-    "a" : lambda m: m.atomic,
-    "p" : lambda m: m.optional,
-    "l" : lambda m: m.alternative,
-    "r" : lambda m: m.repeated,
+    "o" : lambda f: f.ordered,
+    "u" : lambda f: f.unordered,
+    "a" : lambda f: f.atomic,
+    "p" : lambda f: f.optional,
+    "l" : lambda f: f.alternative,
+    "r" : lambda f: f.repeated,
 }
 
-def makeExpectations( mock, groups ):
+def makeExpectations( factory, mock, groups ):
     if len( groups ) > 0:
         group = groups[ 0 ]
-        with groupMakers[ group ]( mock ):
+        with groupMakers[ group ]( factory ):
             mock.expect.foobar( group + "A" )
             mock.expect.foobar( group + "B" )
-            makeExpectations( mock, groups[ 1: ] )
+            makeExpectations( factory, mock, groups[ 1: ] )
             mock.expect.foobar( group + "C" )
             mock.expect.foobar( group + "D" )
 
@@ -25,14 +25,14 @@ def testAllowedOrder( allowedOrder ):
     def test( self ):
         for argument in allowedOrder:
             self.call( argument )
-        self.mock.tearDown()
+        self.factory.tearDown()
     return test
 
 def testForbidenOrder( forbidenOrder ):
     def test( self ):
         for argument in forbidenOrder[ : -1 ]:
             self.call( argument )
-        with self.assertRaises( MockException ):
+        with self.assertRaises( MockMockMock.Exception ):
             self.call( forbidenOrder[ -1 ] )
     return test
 
@@ -40,8 +40,8 @@ def testTearDownError( forbidenOrder ):
     def test( self ):
         for argument in forbidenOrder:
             self.call( argument )
-        with self.assertRaises( MockException ):
-            self.mock.tearDown()
+        with self.assertRaises( MockMockMock.Exception ):
+            self.factory.tearDown()
     return test
 
 def makeTestCase( groups, allowedOrders, forbidenOrders, tearDownErrors ):
@@ -71,8 +71,9 @@ def makeTestCase( groups, allowedOrders, forbidenOrders, tearDownErrors ):
     class TestCase( unittest.TestCase ):
         def setUp( self ):
             unittest.TestCase.setUp( self )
-            self.mock = Mock( "MyMock" )
-            makeExpectations( self.mock, groups )
+            self.factory = MockMockMock.Factory()
+            self.mock = self.factory.create( "MyMock" )
+            makeExpectations( self.factory, self.mock, groups )
 
         def call( self, argument ):
             assert( len( argument ) == 2 )

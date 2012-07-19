@@ -1,3 +1,2 @@
 from Factory import Factory
-from TestCase import TestCase
-from MockException import MockException
+from _Details.MockException import MockException as Exception
