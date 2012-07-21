@@ -11,13 +11,13 @@ groupMakers = {
     "r" : lambda f: f.repeated,
 }
 
-def makeExpectations( factory, mock, groups ):
+def makeExpectations( mocks, mock, groups ):
     if len( groups ) > 0:
         group = groups[ 0 ]
-        with groupMakers[ group ]( factory ):
+        with groupMakers[ group ]( mocks ):
             mock.expect.foobar( group + "A" )
             mock.expect.foobar( group + "B" )
-            makeExpectations( factory, mock, groups[ 1: ] )
+            makeExpectations( mocks, mock, groups[ 1: ] )
             mock.expect.foobar( group + "C" )
             mock.expect.foobar( group + "D" )
 
@@ -25,7 +25,7 @@ def testAllowedOrder( allowedOrder ):
     def test( self ):
         for argument in allowedOrder:
             self.call( argument )
-        self.factory.tearDown()
+        self.mocks.tearDown()
     return test
 
 def testForbidenOrder( forbidenOrder ):
@@ -41,7 +41,7 @@ def testTearDownError( forbidenOrder ):
         for argument in forbidenOrder:
             self.call( argument )
         with self.assertRaises( MockMockMock.Exception ):
-            self.factory.tearDown()
+            self.mocks.tearDown()
     return test
 
 def makeTestCase( groups, allowedOrders, forbidenOrders, tearDownErrors ):
@@ -71,15 +71,15 @@ def makeTestCase( groups, allowedOrders, forbidenOrders, tearDownErrors ):
     class TestCase( unittest.TestCase ):
         def setUp( self ):
             unittest.TestCase.setUp( self )
-            self.factory = MockMockMock.Factory()
-            self.mock = self.factory.create( "MyMock" )
-            makeExpectations( self.factory, self.mock, groups )
+            self.mocks = MockMockMock.Engine()
+            self.myMock = self.mocks.create( "myMock" )
+            makeExpectations( self.mocks, self.myMock, groups )
 
         def call( self, argument ):
             assert( len( argument ) == 2 )
             assert( argument[ 0 ] in groupMakers )
             assert( argument[ 1 ] in "ABCDX" )
-            self.mock.object.foobar( argument )
+            self.myMock.object.foobar( argument )
 
     for allowedOrder in allowedOrders:
         setattr( TestCase, "test_" + "".join( allowedOrder ), testAllowedOrder( allowedOrder ) )

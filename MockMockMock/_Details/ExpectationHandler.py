@@ -15,12 +15,12 @@ class AnyAttribute:
         return self.__getattr__( "__call__" )( *args, **kwds )
 
 class CallChecker:
-    def __init__( self, engine, expectations ):
-        self.__engine = engine
+    def __init__( self, handler, expectations ):
+        self.__handler = handler
         self.__expectations = expectations
 
     def __call__( self, *args, **kwds ):
-        return self.__engine.checkExpectationCall( self.__expectations, args, kwds )
+        return self.__handler.checkExpectationCall( self.__expectations, args, kwds )
 
 class BasicExpectationProxy:
     def __init__( self, expectation ):
@@ -49,7 +49,7 @@ class CallableExpectationProxy( BasicExpectationProxy ):
         self.__expectation.expectCall( checker )
         return BasicExpectationProxy( self.__expectation )
 
-class Engine( object ):
+class ExpectationHandler( object ):
     def __init__( self, initialGroup ):
         self.__currentGroup = initialGroup
 
@@ -69,9 +69,9 @@ class Engine( object ):
         return self.StackPoper( self )
 
     class StackPoper:
-        def __init__( self, engine ): self.__engine = engine
+        def __init__( self, handler ): self.__handler = handler
         def __enter__( self ): pass
-        def __exit__( self, *ignored ): self.__engine.popGroup()
+        def __exit__( self, *ignored ): self.__handler.popGroup()
 
     def popGroup( self ):
         self.__currentGroup = self.__currentGroup.parent

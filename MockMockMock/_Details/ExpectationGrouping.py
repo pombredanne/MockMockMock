@@ -159,7 +159,7 @@ class ExpectationGroup:
 
     def getRequiredCallsExamples( self ):
         ### @todo Implement
-        return [ "MyMock.foobar" ]
+        return [ "myMock.foobar" ]
 
     def rewindGroups( self ):
         if self.__shallStick():

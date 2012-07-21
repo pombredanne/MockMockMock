@@ -1,40 +1,40 @@
 from _Details.Mock import Mock
 from _Details.ExpectationGrouping import OrderedExpectationGroup, UnorderedExpectationGroup, AtomicExpectationGroup, OptionalExpectationGroup, AlternativeExpectationGroup, RepeatedExpectationGroup
-from _Details.Engine import Engine
+from _Details.ExpectationHandler import ExpectationHandler
 
-class Factory:
+class Engine:
     def __init__( self ):
-        self.__engine = Engine( OrderedExpectationGroup() )
+        self.__handler = ExpectationHandler( OrderedExpectationGroup() )
         self.__mocks = list()
 
     def create( self, name ):
-        mock = Mock( name, self.__engine )
+        mock = Mock( name, self.__handler )
         self.__mocks.append( mock )
         return mock
 
     def tearDown( self ):
-        self.__engine.tearDown()
+        self.__handler.tearDown()
 
     @property
     def unordered( self ):
-        return self.__engine.pushGroup( UnorderedExpectationGroup() )
+        return self.__handler.pushGroup( UnorderedExpectationGroup() )
 
     @property
     def ordered( self ):
-        return self.__engine.pushGroup( OrderedExpectationGroup() )
+        return self.__handler.pushGroup( OrderedExpectationGroup() )
 
     @property
     def atomic( self ):
-        return self.__engine.pushGroup( AtomicExpectationGroup() )
+        return self.__handler.pushGroup( AtomicExpectationGroup() )
 
     @property
     def optional( self ):
-        return self.__engine.pushGroup( OptionalExpectationGroup() )
+        return self.__handler.pushGroup( OptionalExpectationGroup() )
 
     @property
     def alternative( self ):
-        return self.__engine.pushGroup( AlternativeExpectationGroup() )
+        return self.__handler.pushGroup( AlternativeExpectationGroup() )
 
     @property
     def repeated( self ):
-        return self.__engine.pushGroup( RepeatedExpectationGroup() )
+        return self.__handler.pushGroup( RepeatedExpectationGroup() )
