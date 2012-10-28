@@ -251,5 +251,3 @@ UnorderedInRepeatedGroup = makeTestCase(
         "rArBuAuBuCuDrC",
     ]
 )
-
-unittest.main()

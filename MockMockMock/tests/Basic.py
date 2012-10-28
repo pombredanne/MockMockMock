@@ -17,7 +17,7 @@ class PublicInterface( unittest.TestCase ):
         self.myMock = self.mocks.create( "myMock" )
 
     def testMockMockMock( self ):
-        self.assertEqual( self.dir( MockMockMock ), [ "Engine", "Exception" ] )
+        self.assertEqual( self.dir( MockMockMock ), [ "Engine", "Exception", "tests" ] )
 
     def testEngine( self ):
         self.assertEqual( self.dir( self.mocks ), [ "alternative", "atomic", "create", "optional", "ordered", "repeated", "tearDown", "unordered" ] )
@@ -314,5 +314,3 @@ class Ordering( unittest.TestCase ):
                 self.myMock.expect.foobar()
             self.myMock.object.foobar()
         self.assertEqual( cm.exception.message, "myMock.foobar is expected as a property and as a method call in an unordered group" )
-
-unittest.main()
