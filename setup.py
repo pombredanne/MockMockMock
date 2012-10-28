@@ -43,7 +43,7 @@ class test( Command ):
 
 setup(
     name = "MockMockMock",
-    version = "0.1.0",
+    version = "0.1.1",
     description = "My mock library. Don't use it (yet)",
     author = "Vincent Jacques",
     author_email = "vincent@vincent-jacques.net",
@@ -52,6 +52,7 @@ setup(
     """ ),
     packages = [
         "MockMockMock",
+        "MockMockMock._Details",
         "MockMockMock.tests",
     ],
     classifiers = [
