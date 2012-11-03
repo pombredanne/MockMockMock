@@ -5,12 +5,9 @@ from _Details.ExpectationHandler import ExpectationHandler
 class Engine:
     def __init__( self ):
         self.__handler = ExpectationHandler( OrderedExpectationGroup() )
-        self.__mocks = list()
 
     def create( self, name ):
-        mock = Mock( name, self.__handler )
-        self.__mocks.append( mock )
-        return mock
+        return Mock( name, self.__handler )
 
     def tearDown( self ):
         self.__handler.tearDown()
