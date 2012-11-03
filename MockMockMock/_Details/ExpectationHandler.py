@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+
+# Copyright 2012 Vincent Jacques
+# vincent@vincent-jacques.net
+
 from MockException import MockException
 from Expectation import Expectation
 import ArgumentChecking
