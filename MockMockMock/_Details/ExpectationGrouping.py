@@ -8,7 +8,7 @@ class OrderedOrderingPolicy:
         possible = []
         for expectation in expectations:
             possible += expectation.getCurrentPossibleExpectations()
-            if expectation.nbRequiredCalls() > 0:
+            if expectation.requiresMoreCalls():
                 break
         return possible
 
@@ -20,10 +20,17 @@ class UnorderedOrderingPolicy:
         return possible
 
 class AllCompletionPolicy:
-    def nbRequiredCalls( self, expectations ):
-        required = 0
+    def requiresMoreCalls( self, expectations ):
         for expectation in expectations:
-            required += expectation.nbRequiredCalls()
+            if expectation.requiresMoreCalls():
+                return True
+        return False
+
+    def getRequiredCallsExamples( self, expectations ):
+        required = []
+        for expectation in expectations:
+            if expectation.requiresMoreCalls():
+                required += expectation.getRequiredCallsExamples()
         return required
 
     def acceptsMoreCalls( self, expectations ):
@@ -33,8 +40,8 @@ class AllCompletionPolicy:
         pass
 
 class AnyCompletionPolicy:
-    def nbRequiredCalls( self, expectations ):
-        return 0
+    def requiresMoreCalls( self, expectations ):
+        return False
 
     def acceptsMoreCalls( self, expectations ):
         return True
@@ -43,26 +50,31 @@ class AnyCompletionPolicy:
         pass
 
 class ExactlyOneCompletionPolicy:
-    def nbRequiredCalls( self, expectations ):
-        required = 1
+    def requiresMoreCalls( self, expectations ):
         for expectation in expectations:
-            if len( expectation.getCurrentPossibleExpectations() ) == 0:
-                required = 0
-        return required
+            if not expectation.requiresMoreCalls():
+                return False
+        return True
+
+    def getRequiredCallsExamples( self, expectations ):
+        return []
 
     def acceptsMoreCalls( self, expectations ):
-        return self.nbRequiredCalls( expectations ) == 1
+        return self.requiresMoreCalls( expectations )
 
     def markExpectationCalled( self, expectations, expectation ):
         pass
 
 class RepeatedCompletionPolicy:
-    def nbRequiredCalls( self, expectations ):
+    def requiresMoreCalls( self, expectations ):
         required = 0
         if expectations[ 0 ].called:
             for expectation in expectations:
-                required += expectation.nbRequiredCalls()
+                required += expectation.requiresMoreCalls()
         return required
+
+    def getRequiredCallsExamples( self, expectations ):
+        return []
 
     def acceptsMoreCalls( self, expectations ):
         return True
@@ -109,11 +121,14 @@ class ExpectationWrapper( object ):
         else:
             return [ self ]
 
-    def nbRequiredCalls( self ):
+    def requiresMoreCalls( self ):
         if self.__called:
-            return 0
+            return False
         else:
-            return 1
+            return True
+
+    def getRequiredCallsExamples( self ):
+        return [ self.__expectation.name ]
 
     @property
     def called( self ):
@@ -159,12 +174,11 @@ class ExpectationGroup:
         else:
             return []
 
-    def nbRequiredCalls( self ):
-        return self.__completion.nbRequiredCalls( self.__expectations )
+    def requiresMoreCalls( self ):
+        return self.__completion.requiresMoreCalls( self.__expectations )
 
     def getRequiredCallsExamples( self ):
-        ### @todo Implement
-        return [ "myMock.foobar" ]
+        return self.__completion.getRequiredCallsExamples( self.__expectations )
 
     def rewindGroups( self ):
         if self.__shallStick():

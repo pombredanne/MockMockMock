@@ -113,6 +113,5 @@ class ExpectationHandler( object ):
         return returnValue
 
     def tearDown( self ):
-        requiredCalls = self.__currentGroup.nbRequiredCalls()
-        if requiredCalls:
-            raise MockException( ", ".join( self.__currentGroup.getRequiredCallsExamples() ) + " not called" )
+        if self.__currentGroup.requiresMoreCalls():
+            raise MockException( " or ".join( self.__currentGroup.getRequiredCallsExamples() ) + " not called" )
