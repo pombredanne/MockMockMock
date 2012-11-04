@@ -54,6 +54,7 @@ setup(
     packages = [
         "MockMockMock",
         "MockMockMock._Details",
+        "MockMockMock._Details.ExpectationGrouping",
         "MockMockMock.tests",
     ],
     classifiers = [
