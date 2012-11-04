@@ -32,8 +32,7 @@ class SingleExpectation( unittest.TestCase ):
     def testMethodCallWithReturn( self ):
         returnValue = object()
         self.myMock.expect.foobar().andReturn( returnValue )
-        # Not only "==" but "is"
-        self.assertTrue( self.myMock.object.foobar() is returnValue )
+        self.assertIs( self.myMock.object.foobar(), returnValue )
 
     def testPropertyWithReturn( self ):
         self.myMock.expect.foobar.andReturn( 42 )
