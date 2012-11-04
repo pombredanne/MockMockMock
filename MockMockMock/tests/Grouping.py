@@ -108,12 +108,13 @@ UnorderedGroup = makeTestCase(
         "uBuCuAuD",
     ],
     [
-        # BaD argument
+        # Bad argument
         "uAuX",
     ],
     [
         # Not completed
         "uAuBuC",
+        "uAuBuD",
         "uAuB",
         "uA",
         "",
@@ -129,6 +130,8 @@ OrderedGroup = makeTestCase(
     [
         # Wrong order
         "oB",
+        "oC",
+        "oD",
     ],
     [
         # Not completed
@@ -187,15 +190,18 @@ RepeatedGroup = makeTestCase(
         "rArBrCrD",
         # Several times
         "rArBrCrDrArBrCrD",
-        # "rArBrCrDrArBrCrDrArBrCrD",
+        "rArBrCrDrArBrCrDrArBrCrD",
     ],
     [
     ],
     [
         # Partial calls
+        "rA",
         "rArB",
-        # "rArBrCrDrArB",
-        # "rArBrCrDrArBrCrDrArB",
+        "rArBrCrDrA",
+        "rArBrCrDrArB",
+        "rArBrCrDrArBrCrDrA",
+        "rArBrCrDrArBrCrDrArB",
     ]
 )
 
