@@ -106,7 +106,7 @@ class ExpectationHandler( object ):
         for expectation in expectations:
             if expectation.checkCall( args, kwds ):
                 return self.__callExpectation( expectation )
-        raise MockException( expectations[ 0 ].name + " called with bad arguments" )
+        raise MockException( expectations[ 0 ].name + " called with bad arguments " + str(args) + " " + str(kwds) )
 
     def __callExpectation( self, expectation ):
         returnValue, self.__currentGroup = expectation.call()
