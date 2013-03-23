@@ -1,104 +1,120 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2012 Vincent Jacques
+# Copyright 2013 Vincent Jacques
 # vincent@vincent-jacques.net
+
+# This file is part of MockMockMock. http://jacquev6.github.com/MockMockMock
+
+# MockMockMock is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License
+# as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+# MockMockMock is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public License along with MockMockMock.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 
 import MockMockMock
 
+
 groupMakers = {
-    "o" : lambda f: f.ordered,
-    "u" : lambda f: f.unordered,
-    "a" : lambda f: f.atomic,
-    "p" : lambda f: f.optional,
-    "l" : lambda f: f.alternative,
-    "r" : lambda f: f.repeated,
+    "o": lambda f: f.ordered,
+    "u": lambda f: f.unordered,
+    "a": lambda f: f.atomic,
+    "p": lambda f: f.optional,
+    "l": lambda f: f.alternative,
+    "r": lambda f: f.repeated,
 }
 
-def makeExpectations( mocks, mock, groups ):
-    if len( groups ) > 0:
-        group = groups[ 0 ]
-        with groupMakers[ group ]( mocks ):
-            mock.expect.foobar( group + "A" )
-            mock.expect.foobar( group + "B" )
-            makeExpectations( mocks, mock, groups[ 1: ] )
-            mock.expect.foobar( group + "C" )
-            mock.expect.foobar( group + "D" )
 
-def testAllowedOrder( allowedOrder ):
-    def test( self ):
+def makeExpectations(mocks, mock, groups):
+    if len(groups) > 0:
+        group = groups[0]
+        with groupMakers[group](mocks):
+            mock.expect.foobar(group + "A")
+            mock.expect.foobar(group + "B")
+            makeExpectations(mocks, mock, groups[1:])
+            mock.expect.foobar(group + "C")
+            mock.expect.foobar(group + "D")
+
+
+def testAllowedOrder(allowedOrder):
+    def test(self):
         for argument in allowedOrder:
-            self.call( argument )
+            self.call(argument)
         self.mocks.tearDown()
     return test
 
-def testForbidenOrder( forbidenOrder ):
-    def test( self ):
-        for argument in forbidenOrder[ : -1 ]:
-            self.call( argument )
-        with self.assertRaises( MockMockMock.Exception ):
-            self.call( forbidenOrder[ -1 ] )
+
+def testForbidenOrder(forbidenOrder):
+    def test(self):
+        for argument in forbidenOrder[: -1]:
+            self.call(argument)
+        with self.assertRaises(MockMockMock.Exception):
+            self.call(forbidenOrder[-1])
     return test
 
-def testTearDownError( forbidenOrder ):
-    def test( self ):
+
+def testTearDownError(forbidenOrder):
+    def test(self):
         for argument in forbidenOrder:
-            self.call( argument )
-        with self.assertRaises( MockMockMock.Exception ):
+            self.call(argument)
+        with self.assertRaises(MockMockMock.Exception):
             self.mocks.tearDown()
     return test
 
-def makeTestCase( groups, allowedOrders, forbidenOrders, tearDownErrors ):
-    groups = list( groups )
+
+def makeTestCase(groups, allowedOrders, forbidenOrders, tearDownErrors):
+    groups = list(groups)
     allowedOrders = [
         [
-            allowedOrder[ 2 * i : 2 * i + 2 ]
-            for i in range( len( allowedOrder ) / 2 )
+            allowedOrder[2 * i:2 * i + 2]
+            for i in range(len(allowedOrder) / 2)
         ]
         for allowedOrder in allowedOrders
     ]
     forbidenOrders = [
         [
-            forbidenOrder[ 2 * i : 2 * i + 2 ]
-            for i in range( len( forbidenOrder ) / 2 )
+            forbidenOrder[2 * i:2 * i + 2]
+            for i in range(len(forbidenOrder) / 2)
         ]
         for forbidenOrder in forbidenOrders
     ]
     tearDownErrors = [
         [
-            tearDownError[ 2 * i : 2 * i + 2 ]
-            for i in range( len( tearDownError ) / 2 )
+            tearDownError[2 * i:2 * i + 2]
+            for i in range(len(tearDownError) / 2)
         ]
         for tearDownError in tearDownErrors
     ]
 
-    class TestCase( unittest.TestCase ):
-        def setUp( self ):
-            unittest.TestCase.setUp( self )
+    class TestCase(unittest.TestCase):
+        def setUp(self):
+            unittest.TestCase.setUp(self)
             self.mocks = MockMockMock.Engine()
-            self.myMock = self.mocks.create( "myMock" )
-            makeExpectations( self.mocks, self.myMock, groups )
+            self.myMock = self.mocks.create("myMock")
+            makeExpectations(self.mocks, self.myMock, groups)
 
-        def call( self, argument ):
-            assert( len( argument ) == 2 )
-            assert( argument[ 0 ] in groupMakers )
-            assert( argument[ 1 ] in "ABCDX" )
-            self.myMock.object.foobar( argument )
+        def call(self, argument):
+            assert(len(argument) == 2)
+            assert(argument[0] in groupMakers)
+            assert(argument[1] in "ABCDX")
+            self.myMock.object.foobar(argument)
 
     for allowedOrder in allowedOrders:
-        setattr( TestCase, "test_" + "".join( allowedOrder ), testAllowedOrder( allowedOrder ) )
+        setattr(TestCase, "test_" + "".join(allowedOrder), testAllowedOrder(allowedOrder))
 
     for forbidenOrder in forbidenOrders:
-        setattr( TestCase, "test_" + "".join( forbidenOrder ), testForbidenOrder( forbidenOrder ) )
+        setattr(TestCase, "test_" + "".join(forbidenOrder), testForbidenOrder(forbidenOrder))
 
     for tearDownError in tearDownErrors:
-        setattr( TestCase, "test_" + "".join( tearDownError ), testTearDownError( tearDownError ) )
+        setattr(TestCase, "test_" + "".join(tearDownError), testTearDownError(tearDownError))
 
-    TestCase.__name__ = "TestCase_" + "".join( groups )
-        
+    TestCase.__name__ = "TestCase_" + "".join(groups)
+
     return TestCase
-    
+
 UnorderedGroup = makeTestCase(
     "u",
     [

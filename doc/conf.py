@@ -13,30 +13,32 @@
 
 # You should have received a copy of the GNU Lesser General Public License along with MockMockMock.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys, os
 
-class Expectation(object):
-    def __init__(self, name):
-        self.name = name
-        self.__checker = None
-        self.__action = lambda: None
+sys.path.insert(0, os.path.abspath('..'))
+from setup import version as setupVersion
 
-    # expect
-    def expectCall(self, checker):
-        self.__checker = checker
+extensions = ['sphinx.ext.autodoc']
 
-    def setAction(self, action):
-        self.__action = action
+# The suffix of source filenames.
+source_suffix = '.rst'
 
-    # check
-    def checkName(self, name):
-        return self.name == name
+# The master toctree document.
+master_doc = 'index'
 
-    def expectsCall(self):
-        return self.__checker is not None
+# General information about the project.
+project = u'MockMockMock'
+copyright = u'2013, Vincent Jacques'
 
-    def checkCall(self, args, kwds):
-        return self.__checker(args, kwds)
+# The version info for the project you're documenting, acts as replacement for
+# |version| and |release|, also used in various other places throughout the
+# built documents.
+#
+# The short X.Y version.
+version = setupVersion
+# The full version, including alpha/beta/rc tags.
+release = setupVersion
 
-    # call
-    def call(self):
-        return self.__action()
+autodoc_default_flags = ["members"]
+autodoc_member_order = "bysource"
+autoclass_content = "both"
