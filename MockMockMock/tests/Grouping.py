@@ -70,21 +70,21 @@ def makeTestCase(groups, allowedOrders, forbidenOrders, tearDownErrors):
     allowedOrders = [
         [
             allowedOrder[2 * i:2 * i + 2]
-            for i in range(len(allowedOrder) / 2)
+            for i in range(len(allowedOrder) // 2)
         ]
         for allowedOrder in allowedOrders
     ]
     forbidenOrders = [
         [
             forbidenOrder[2 * i:2 * i + 2]
-            for i in range(len(forbidenOrder) / 2)
+            for i in range(len(forbidenOrder) // 2)
         ]
         for forbidenOrder in forbidenOrders
     ]
     tearDownErrors = [
         [
             tearDownError[2 * i:2 * i + 2]
-            for i in range(len(tearDownError) / 2)
+            for i in range(len(tearDownError) // 2)
         ]
         for tearDownError in tearDownErrors
     ]

@@ -27,7 +27,7 @@ function check {
 }
 
 function test {
-    # python3 setup.py test --quiet || exit
+    python3 setup.py test --quiet || exit
 
     coverage run --branch --include=MockMockMock/*.py --omit=MockMockMock/tests/*.py setup.py test --quiet || exit
     coverage report --show-missing || exit
