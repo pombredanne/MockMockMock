@@ -37,4 +37,4 @@ class SequenceBetweenSeveralLinkedMocks(unittest.TestCase):
         self.m2.expect.foobar(43)
         with self.assertRaises(MockMockMock.Exception) as cm:
             self.m2.object.foobar(43)
-        self.assertEqual(cm.exception.message, "m2.foobar called instead of m1.foobar")
+        self.assertEqual(str(cm.exception), "m2.foobar called instead of m1.foobar")

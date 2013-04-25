@@ -43,7 +43,7 @@ class Ordering(unittest.TestCase):
                 self.myMock.expect.foobar()
                 self.myMock.expect.foobar
             self.myMock.object.foobar
-        self.assertEqual(cm.exception.message, "myMock.foobar is expected as a property and as a method call in an unordered group")
+        self.assertEqual(str(cm.exception), "myMock.foobar is expected as a property and as a method call in an unordered group")
 
     def testUnorderedGroupOfSamePropertyAndMethod(self):
         with self.assertRaises(MockMockMock.Exception) as cm:
@@ -51,4 +51,4 @@ class Ordering(unittest.TestCase):
                 self.myMock.expect.foobar
                 self.myMock.expect.foobar()
             self.myMock.object.foobar()
-        self.assertEqual(cm.exception.message, "myMock.foobar is expected as a property and as a method call in an unordered group")
+        self.assertEqual(str(cm.exception), "myMock.foobar is expected as a property and as a method call in an unordered group")

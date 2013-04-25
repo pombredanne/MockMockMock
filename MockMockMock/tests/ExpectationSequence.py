@@ -36,14 +36,14 @@ class ExpectationSequence(unittest.TestCase):
         self.myMock.expect.barbaz()
         with self.assertRaises(MockMockMock.Exception) as cm:
             self.myMock.object.barbaz()
-        self.assertEqual(cm.exception.message, "myMock.barbaz called instead of myMock.foobar")
+        self.assertEqual(str(cm.exception), "myMock.barbaz called instead of myMock.foobar")
 
     def testCallWithArgumentsNotExpectedFirst(self):
         self.myMock.expect.foobar(42)
         self.myMock.expect.foobar(43)
         with self.assertRaises(MockMockMock.Exception) as cm:
             self.myMock.object.foobar(43)
-        self.assertEqual(cm.exception.message, "myMock.foobar called with bad arguments (43,) {}")
+        self.assertEqual(str(cm.exception), "myMock.foobar called with bad arguments (43,) {}")
 
     def testManyCalls(self):
         self.myMock.expect.foobar(1)

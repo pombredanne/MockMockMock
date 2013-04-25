@@ -33,7 +33,7 @@ class ArgumentCheckers(unittest.TestCase):
         self.assertEqual(m.object.foobar(12), 42)
         with self.assertRaises(MockMockMock.Exception) as cm:
             m.object.foobar(13)
-        self.assertEqual(cm.exception.message, "m.foobar called with bad arguments (13,) {}")
+        self.assertEqual(str(cm.exception), "m.foobar called with bad arguments (13,) {}")
 
     # def testIdentityChecker(self):
     # def testTypeChecker(self):
