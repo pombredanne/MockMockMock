@@ -26,11 +26,18 @@ function check {
     pep8 --ignore=E501 MockMockMock setup.py || exit
 }
 
-function test {
-    python3 setup.py test --quiet || exit
-
+function test2 {
     coverage run --branch --include=MockMockMock/*.py --omit=MockMockMock/tests/*.py setup.py test --quiet || exit
     coverage report --show-missing || exit
+}
+
+function test3 {
+    python3 setup.py test --quiet || exit
+}
+
+function test {
+    test3
+    test2
 }
 
 function bump {
@@ -69,6 +76,10 @@ function push {
     git push github master master:develop
     git push --force github gh-pages
     git push --tags
+}
+
+function run2to3 {
+    2to3 --write --nobackups AnotherPyGraphvizAgain
 }
 
 $1
