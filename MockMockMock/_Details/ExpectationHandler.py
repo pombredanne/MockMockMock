@@ -24,6 +24,13 @@ class AnyAttribute:
         self.__mockName = mockName
 
     def __getattr__(self, name):
+        ### @todo Fix this hack
+        # Hack to allow m.expect._call_.withArguments,
+        # because m.expect.__call__.withArguments fails,
+        # because function doesn't have attribute "withArguments"
+        if name == "_call_":
+            name = "__call__"
+        # End of hack
         if name == "__dir__":
             raise AttributeError()
         return self.__apply(self.__mockName + "." + name)
