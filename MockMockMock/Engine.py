@@ -13,6 +13,8 @@
 
 # You should have received a copy of the GNU Lesser General Public License along with MockMockMock.  If not, see <http://www.gnu.org/licenses/>.
 
+import inspect
+
 from _Details.Mock import Mock
 from _Details.ExpectationGrouping import OrderedExpectationGroup, UnorderedExpectationGroup, AtomicExpectationGroup, OptionalExpectationGroup, AlternativeExpectationGroup, RepeatedExpectationGroup
 from _Details.ExpectationHandler import ExpectationHandler
@@ -21,11 +23,37 @@ from _Details.ExpectationHandler import ExpectationHandler
 class Engine:
     def __init__(self):
         self.__handler = ExpectationHandler(OrderedExpectationGroup())
+        self.__replaced = []
 
     def create(self, name):
         return Mock(name, self.__handler)
 
+    def replace(self, name):
+        container, attribute = self.__findByName(name)
+        self.__replaced.append((container, attribute, getattr(container, attribute)))
+        m = self.create(name)
+        setattr(container, attribute, m.object)
+        return m
+
+    @staticmethod
+    def __findByName(name):
+        names = name.split(".")
+        attribute = names[-1]
+        current = inspect.currentframe()
+        try:
+            frame = current.f_back.f_back
+            symbols = dict(frame.f_globals)
+            symbols.update(frame.f_locals)
+            container = symbols[names[0]]
+        finally:
+            del current
+        for name in names[1:-1]:
+            container = getattr(container, name)
+        return container, attribute
+
     def tearDown(self):
+        for container, attribute, value in self.__replaced:
+            setattr(container, attribute, value)
         self.__handler.tearDown()
 
     @property
