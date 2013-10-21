@@ -52,6 +52,11 @@ class SingleExpectation(unittest.TestCase):
         self.myMock.expect(43, 44).andReturn(42)
         self.assertEqual(self.myMock.object(43, 44), 42)
 
+    def testObjectCallWithCustomArgumentChecker(self):
+        # See the hack in AnyAttribute.__getattr__
+        self.myMock.expect._call_.withArguments(lambda args, kwds: True).andReturn(42)
+        self.assertEqual(self.myMock.object(43, 44), 42)
+
     def testMethodCallWithRaise(self):
         self.myMock.expect.foobar().andRaise(TestException())
         with self.assertRaises(TestException):
