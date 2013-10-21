@@ -1,0 +1,238 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>MockMockMock &mdash; MockMockMock 0.4.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.4.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="MockMockMock 0.4.0 documentation" href="#" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="#">MockMockMock 0.4.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <span class="target" id="module-MockMockMock"></span><div class="section" id="mockmockmock">
+<h1>MockMockMock<a class="headerlink" href="#mockmockmock" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>MockMockMock is a Python <a class="reference external" href="http://en.wikipedia.org/wiki/Mock_object">mocking</a> library.</p>
+<p>It focuses on very explicit definition of the mocks&#8217; behaviour.
+It allows as-specific-as-needed unit-tests as well as more generic ones.</p>
+</div>
+<div class="section" id="basic-usage">
+<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h2>
+<p>This documentation assumes you are fairly confortable with
+<a class="reference external" href="http://docs.python.org/library/unittest.html">unittest</a>.</p>
+<p>Let&#8217;s say you are writing a class <tt class="docutils literal"><span class="pre">Stats</span></tt> that performs basic statistics on integer numbers.
+This class needs some source of integers.
+Using dependency injection, you pass a <tt class="docutils literal"><span class="pre">source</span></tt> object to the constructor of <tt class="docutils literal"><span class="pre">Stats</span></tt>.
+In real execution, it could read integers from keyboard or from a file.
+For your unit-tests, you can mock this source to simulate all kinds of behaviours.</p>
+<p>So, here is how you would do that with PyMockMockMock. Create a test case:</p>
+<div class="highlight-python"><pre>import unittest
+from MockMockMock import Mock
+
+from Stats import Stats
+
+class MyTestCase(unittest.TestCase):
+    def setUp(self):</pre>
+</div>
+<p>In <tt class="docutils literal"><span class="pre">setUp</span></tt>, you create the mock...</p>
+<div class="highlight-python"><pre>.       self.source = Mock("source")</pre>
+</div>
+<p>... and inject it in your constructor:</p>
+<div class="highlight-python"><pre>.       self.stats = Stats(self.source.object)</pre>
+</div>
+<p>In <tt class="docutils literal"><span class="pre">tearDown</span></tt>, you check that each mock has been used correctly:</p>
+<div class="highlight-python"><pre>.   def tearDown(self):
+        self.source.tearDown()</pre>
+</div>
+<p>Then, in you test methods, there are two phases. First, instruct the mock about how to behave...</p>
+<div class="highlight-python"><pre>.   def testAverage(self):
+        self.source.expect.get().andReturn([42, 43, 44])</pre>
+</div>
+<p>... then call your code, that will call the mock.</p>
+<div class="highlight-python"><pre>.       self.assertEqual(self.stats.average(), 43)</pre>
+</div>
+<p>This way, you:</p>
+<ul class="simple">
+<li>are checking that your code calls what it has to call (the final call to Mock.tearDown will detect if some call was <tt class="docutils literal"><span class="pre">expect</span></tt> ed, but not called)</li>
+<li>can inject to your code wathever behaviour you want to test.</li>
+</ul>
+<p>Of course, do not forget to actually run the tests:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">unittest</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="mock-behaviour">
+<h2>Mock behaviour<a class="headerlink" href="#mock-behaviour" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="expectations">
+<h3>Expectations<a class="headerlink" href="#expectations" title="Permalink to this headline">¶</a></h3>
+<p>You can instruct the mock to expect successive calls:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">testXxxx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">andReturn</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">isFinished</span><span class="p">()</span><span class="o">.</span><span class="n">andReturn</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">average</span><span class="p">(),</span> <span class="mf">2.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can expect successive calls to the same method and have different behaviour each time:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">testXxxx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">andReturn</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">andReturn</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">andReturn</span><span class="p">([])</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">average</span><span class="p">(),</span> <span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can expect arguments in method calls:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">testXxxx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">andReturn</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">average</span><span class="p">(),</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can expect calls to properties as well:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">testXxxx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">andReturn</span><span class="p">(</span><span class="s">&quot;Mock&quot;</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">getSourceName</span><span class="p">(),</span> <span class="s">&quot;Mock&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="behaviour">
+<h3>Behaviour<a class="headerlink" href="#behaviour" title="Permalink to this headline">¶</a></h3>
+<p>You can simulate a source that raises exceptions:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">testXxxx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">andRaise</span><span class="p">(</span><span class="ne">Exception</span><span class="p">())</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">average</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="mock-grouping">
+<h3>Mock grouping<a class="headerlink" href="#mock-grouping" title="Permalink to this headline">¶</a></h3>
+<p>By default, all <tt class="docutils literal"><span class="pre">expect</span></tt> ed calls are registered in an <tt class="docutils literal"><span class="pre">ordered</span></tt> group.
+This means that the mock will raise a <tt class="docutils literal"><span class="pre">MockException</span></tt> if your code does not call those methods in the order they were <tt class="docutils literal"><span class="pre">expect</span></tt> ed.
+The <cite>Mock.tearDown</cite> method will raise <tt class="docutils literal"><span class="pre">MockException</span></tt> as if your code does not call all the <tt class="docutils literal"><span class="pre">expect</span></tt> ed methods.</p>
+<p>To tweak this behaviour, there are several other available grouping methods.</p>
+<p>You can tell the mock to expect all calls, but in any order:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">testXxxx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">unordered</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">foobar</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">barbaz</span><span class="p">()</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">frobnicate</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>You can tell the mock that some calls are optional:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">testXxxx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">optional</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">foobar</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">expect</span><span class="o">.</span><span class="n">barbaz</span><span class="p">()</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">frobnicate</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">MockMockMock</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#basic-usage">Basic usage</a></li>
+<li><a class="reference internal" href="#mock-behaviour">Mock behaviour</a><ul>
+<li><a class="reference internal" href="#expectations">Expectations</a></li>
+<li><a class="reference internal" href="#behaviour">Behaviour</a></li>
+<li><a class="reference internal" href="#mock-grouping">Mock grouping</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#reference">Reference</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="#">MockMockMock 0.4.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Vincent Jacques.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b3.
+    </div>
+  </body>
+</html>
