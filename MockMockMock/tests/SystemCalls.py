@@ -15,6 +15,8 @@
 
 import unittest
 import os.path
+import sys
+atLeastPython3 = sys.hexversion >= 0x03000000
 
 import MockMockMock
 
@@ -45,4 +47,4 @@ class SystemCalls(unittest.TestCase):
         self.assertEqual(subprocess.check_output(["foo", "bar"]), "baz\n")
         self.mocks.tearDown()
         self.assertIs(subprocess.check_output, original)
-        self.assertEqual(subprocess.check_output(["echo", "toto"]), "toto\n")
+        self.assertEqual(subprocess.check_output(["echo", "toto"]), b"toto\n" if atLeastPython3 else "toto\n")
