@@ -26,3 +26,6 @@ class Mock(object):
     @property
     def object(self):
         return self.__handler.object(self.__name)
+
+    def record(self, realObject):
+        return self.__handler.record(self.__name, realObject)

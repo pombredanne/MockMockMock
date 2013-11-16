@@ -37,11 +37,11 @@ class PublicInterface(unittest.TestCase):
         self.assertEqual(self.dir(MockMockMock), ["Engine", "Exception", "tests"])
 
     def testEngine(self):
-        self.assertEqual(self.dir(self.mocks), ["alternative", "atomic", "create", "optional", "ordered", "repeated", "replace", "tearDown", "unordered"])
+        self.assertEqual(self.dir(self.mocks), ["alternative", "atomic", "create", "optional", "ordered", "records", "repeated", "replace", "tearDown", "unordered"])
         self.assertFalse(isCallable(self.mocks))
 
     def testMock(self):
-        self.assertEqual(self.dir(self.myMock), ["expect", "object"])
+        self.assertEqual(self.dir(self.myMock), ["expect", "object", "record"])
         self.assertFalse(isCallable(self.myMock))
 
     def testExpect(self):

@@ -19,9 +19,8 @@ import ArgumentChecking
 
 
 class AnyAttribute:
-    def __init__(self, apply, mockName):
+    def __init__(self, apply):
         self.__apply = apply
-        self.__mockName = mockName
 
     def __getattr__(self, name):
         ### @todo Fix this hack
@@ -33,7 +32,7 @@ class AnyAttribute:
         # End of hack
         if name == "__dir__":
             raise AttributeError()
-        return self.__apply(self.__mockName + "." + name)
+        return self.__apply(name)
 
     def __call__(self, *args, **kwds):  # Needed to make isinstance(mock.expect, collections.Callable) return True
         return self.__getattr__("__call__")(*args, **kwds)
@@ -78,13 +77,43 @@ class CallableExpectationProxy(BasicExpectationProxy):
         return BasicExpectationProxy(self.__expectation)
 
 
+class CallRecorder:
+    def __init__(self, handler, mockName, attrName, realObject):
+        self.__handler = handler
+        self.__mockName = mockName
+        self.__attrName = attrName
+        self.__realObject = realObject
+
+    def __call__(self, *args, **kwds):
+        try:
+            ret = self.__realObject(*args, **kwds)
+            self.__handler.addRecordedCall({
+                "object": self.__mockName,
+                "attribute": self.__attrName,
+                "arguments": args,
+                "keywords": kwds,
+                "return": ret,
+            })
+            return ret
+        except Exception, e:
+            self.__handler.addRecordedCall({
+                "object": self.__mockName,
+                "attribute": self.__attrName,
+                "arguments": args,
+                "keywords": kwds,
+                "exception": e,
+            })
+            raise
+
+
 class ExpectationHandler(object):
     def __init__(self, initialGroup):
         self.__currentGroup = initialGroup
+        self.__recordedCalls = []
 
     # expect
     def expect(self, mockName):
-        return AnyAttribute(self.addExpectation, mockName)
+        return AnyAttribute(lambda attrName: self.addExpectation(mockName + "." + attrName))
 
     def addExpectation(self, name):
         # Note that accepting name == "__call__" allows the mock object to be callable with no specific code
@@ -112,7 +141,7 @@ class ExpectationHandler(object):
 
     # call
     def object(self, mockName):
-        return AnyAttribute(self.checkExpectation, mockName)
+        return AnyAttribute(lambda attrName: self.checkExpectation(mockName + "." + attrName))
 
     def checkExpectation(self, calledName):
         possibleExpectations = self.__currentGroup.getCurrentPossibleExpectations()
@@ -144,3 +173,34 @@ class ExpectationHandler(object):
     def tearDown(self):
         if self.__currentGroup.requiresMoreCalls():
             raise MockException(" or ".join(self.__currentGroup.getRequiredCallsExamples()) + " not called")
+
+    # record / replay
+    def record(self, mockName, realObject):
+        return AnyAttribute(lambda attrName: self.recordCall(realObject, mockName, attrName))
+
+    def recordCall(self, realObject, mockName, attrName):
+        try:
+            attr = getattr(realObject, attrName)
+            if callable(attr):
+                return CallRecorder(self, mockName, attrName, attr)
+            else:
+                self.addRecordedCall({
+                    "object": mockName,
+                    "attribute": attrName,
+                    "return": attr,
+                })
+                return attr
+        except Exception, e:
+            self.addRecordedCall({
+                "object": mockName,
+                "attribute": attrName,
+                "exception": e,
+            })
+            raise
+
+
+    def addRecordedCall(self, call):
+        self.__recordedCalls.append(call)
+
+    def getRecordedCalls(self):
+        return self.__recordedCalls

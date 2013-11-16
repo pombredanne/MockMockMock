@@ -79,3 +79,7 @@ class Engine:
     @property
     def repeated(self):
         return self.__handler.pushGroup(RepeatedExpectationGroup())
+
+    @property
+    def records(self):
+        return self.__handler.getRecordedCalls()
